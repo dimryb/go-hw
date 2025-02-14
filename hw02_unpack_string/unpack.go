@@ -27,23 +27,25 @@ func Unpack(str string) (string, error) {
 	for _, r := range str {
 		switch state {
 		case expectSymbol:
-			if r == '\\' {
+			switch {
+			case r == '\\':
 				state = escaping
-			} else if unicode.IsDigit(r) {
+			case unicode.IsDigit(r):
 				return "", ErrInvalidString
-			} else {
+			default:
 				lastSymbol = r
 				state = expectAny
 			}
 		case expectAny:
-			if r == '\\' {
+			switch {
+			case r == '\\':
 				builder.WriteRune(lastSymbol)
 				state = escaping
-			} else if unicode.IsDigit(r) {
+			case unicode.IsDigit(r):
 				count, _ := strconv.Atoi(string(r))
 				builder.WriteString(strings.Repeat(string(lastSymbol), count))
 				state = expectSymbol
-			} else {
+			default:
 				builder.WriteRune(lastSymbol)
 				lastSymbol = r
 			}
@@ -55,9 +57,10 @@ func Unpack(str string) (string, error) {
 			state = expectAny
 		}
 	}
-	if state == expectAny {
+	switch state {
+	case expectAny:
 		builder.WriteRune(lastSymbol)
-	} else if state == escaping {
+	case escaping:
 		return "", ErrInvalidString
 	}
 
