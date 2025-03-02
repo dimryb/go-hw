@@ -85,12 +85,33 @@ func (l *list) PushBack(v interface{}) *ListItem {
 	return l.push(v, back)
 }
 
+func (l *list) detach(i *ListItem) {
+	if i == nil {
+		return
+	}
+
+	if i.Prev != nil {
+		i.Prev.Next = i.Next
+	} else {
+		l.front = i.Next
+	}
+	if i.Next != nil {
+		i.Next.Prev = i.Prev
+	} else {
+		l.back = i.Prev
+	}
+
+	i.Next = nil
+	i.Prev = nil
+}
+
 func (l *list) Remove(i *ListItem) {
 	if i == nil {
 		return
 	}
-	i.Prev.Next = i.Next
-	i.Next.Prev = i.Prev
+
+	l.detach(i)
+
 	delete(l.data, i)
 }
 
@@ -99,15 +120,7 @@ func (l *list) MoveToFront(i *ListItem) {
 		return
 	}
 
-	if i.Prev != nil {
-		i.Prev.Next = i.Next
-	}
-	if i.Next != nil {
-		i.Next.Prev = i.Prev
-	}
-	if l.back == i {
-		l.back = i.Prev
-	}
+	l.detach(i)
 
 	i.Next = l.front
 	i.Prev = nil

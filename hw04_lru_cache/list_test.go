@@ -70,6 +70,36 @@ func TestList(t *testing.T) {
 		require.Equal(t, []int{10, 20, 40, 50}, elems)
 	})
 
+	t.Run("remove end item", func(t *testing.T) {
+		l := NewList()
+
+		l.PushBack(10)
+		l.PushBack(20)
+		l.PushBack(30)
+		l.PushBack(40)
+
+		l.Remove(l.Back()) // [10, 20, 30]
+
+		elems := toList(l)
+		assert.Equal(t, []int{10, 20, 30}, elems)
+		require.Equal(t, 30, l.Back().Value.(int))
+	})
+
+	t.Run("remove front item", func(t *testing.T) {
+		l := NewList()
+
+		l.PushBack(10)
+		l.PushBack(20)
+		l.PushBack(30)
+		l.PushBack(40)
+
+		l.Remove(l.Front()) // [20, 30, 40]
+
+		elems := toList(l)
+		assert.Equal(t, []int{20, 30, 40}, elems)
+		require.Equal(t, 20, l.Front().Value.(int))
+	})
+
 	t.Run("move to front", func(t *testing.T) {
 		l := NewList()
 
