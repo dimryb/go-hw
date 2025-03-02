@@ -70,4 +70,7 @@ func (c *lruCache) Get(key Key) (interface{}, bool) {
 	return nil, false
 }
 
-func (c *lruCache) Clear() {}
+func (c *lruCache) Clear() {
+	c.items = make(map[Key]*ListItem, c.capacity)
+	c.queue = NewList()
+}
