@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"sync/atomic"
 )
 
 var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
@@ -11,25 +12,20 @@ var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
 type Task func() error
 
 type ErrorsCounter struct {
-	mu       sync.Mutex
-	errCount int
+	errCount int32
 	limit    int
 	cancel   context.CancelFunc
 }
 
 func (e *ErrorsCounter) Increment() {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-	e.errCount++
-	if e.errCount >= e.limit {
+	newCount := atomic.AddInt32(&e.errCount, 1)
+	if newCount >= int32(e.limit) {
 		e.cancel()
 	}
 }
 
 func (e *ErrorsCounter) isLimitExceeded() bool {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-	return e.errCount >= e.limit
+	return atomic.LoadInt32(&e.errCount) >= int32(e.limit)
 }
 
 func Worker(ctx context.Context, tasks <-chan Task, counter *ErrorsCounter, workerNum int) {
