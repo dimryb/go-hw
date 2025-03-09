@@ -17,7 +17,7 @@ type ErrorsCounter struct {
 	cancel   context.CancelFunc
 }
 
-func (e *ErrorsCounter) Increment() {
+func (e *ErrorsCounter) increment() {
 	newCount := atomic.AddInt32(&e.errCount, 1)
 	if newCount >= int32(e.limit) {
 		e.cancel()
@@ -40,7 +40,7 @@ func Worker(ctx context.Context, tasks <-chan Task, counter *ErrorsCounter, work
 			if !counter.isLimitExceeded() {
 				err := t()
 				if err != nil {
-					counter.Increment()
+					counter.increment()
 				}
 			}
 		}
@@ -50,31 +50,35 @@ func Worker(ctx context.Context, tasks <-chan Task, counter *ErrorsCounter, work
 // Run starts tasks in n goroutines and stops its work when receiving m errors from tasks.
 func Run(tasks []Task, n, m int) error {
 	tasksChan := make(chan Task)
-	var wgWorkers sync.WaitGroup
+	var wg sync.WaitGroup
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	errCounter := &ErrorsCounter{limit: m, cancel: cancel}
 
 	for i := 0; i < n; i++ {
-		wgWorkers.Add(1)
+		wg.Add(1)
 		go func() {
-			defer wgWorkers.Done()
+			defer wg.Done()
 			Worker(ctx, tasksChan, errCounter, i)
 		}()
 	}
 
-	for _, task := range tasks {
-		if errCounter.isLimitExceeded() {
-			break
+	go func() {
+		for _, task := range tasks {
+			select {
+			case tasksChan <- task:
+			case <-ctx.Done():
+				break
+			}
 		}
-		tasksChan <- task
-	}
-	close(tasksChan)
+		close(tasksChan)
+	}()
 
-	wgWorkers.Wait()
+	wg.Wait()
 
 	if errCounter.isLimitExceeded() {
 		return ErrErrorsLimitExceeded
 	}
-
 	return nil
 }
