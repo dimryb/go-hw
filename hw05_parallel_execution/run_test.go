@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -110,5 +111,58 @@ func TestRun(t *testing.T) {
 		err := Run(tasks, workersCount, maxErrorsCount)
 		require.NoError(t, err, "expected no error when m < 0")
 		require.Equal(t, runTasksCount, int32(tasksCount), "not all tasks were completed")
+	})
+
+	t.Run("tasks without errors using concurrency check", func(t *testing.T) {
+		tasksCount := 50
+		tasks := make([]Task, 0, tasksCount)
+		var runTasksCount int32
+		var wg sync.WaitGroup
+
+		for i := 0; i < tasksCount; i++ {
+			wg.Add(1)
+			tasks = append(tasks, func() error {
+				defer wg.Done()
+				atomic.AddInt32(&runTasksCount, 1)
+				return nil
+			})
+		}
+
+		workersCount := 5
+		maxErrorsCount := 1
+
+		errChan := make(chan error, 1)
+		go func() {
+			errChan <- Run(tasks, workersCount, maxErrorsCount)
+		}()
+
+		done := make(chan struct{})
+		go func() {
+			wg.Wait()
+			close(done)
+		}()
+
+		duration := 1 * time.Second
+		require.Eventually(t, func() bool {
+			currentCount := atomic.LoadInt32(&runTasksCount)
+			if currentCount != int32(tasksCount) {
+				t.Logf("Current runTasksCount: %d, expected: %d", currentCount, tasksCount)
+			}
+			return atomic.LoadInt32(&runTasksCount) == int32(tasksCount)
+		}, duration, 10*time.Millisecond, "not all tasks were completed concurrently")
+
+		select {
+		case <-time.After(duration):
+			t.Fatalf("Run did not complete within the timeout")
+		case err := <-errChan:
+			require.NoError(t, err, "expected no error during task execution")
+		}
+
+		select {
+		case <-done:
+			require.Equal(t, int32(tasksCount), atomic.LoadInt32(&runTasksCount), "not all tasks were completed")
+		case <-time.After(duration):
+			t.Fatalf("Some tasks did not complete within the timeout")
+		}
 	})
 }
