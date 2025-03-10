@@ -112,7 +112,9 @@ func TestRun(t *testing.T) {
 		require.NoError(t, err, "expected no error when m < 0")
 		require.Equal(t, runTasksCount, int32(tasksCount), "not all tasks were completed")
 	})
+}
 
+func TestTasksWithoutSleep(t *testing.T) {
 	t.Run("tasks without errors using concurrency check", func(t *testing.T) {
 		tasksCount := 50
 		tasks := make([]Task, 0, tasksCount)
