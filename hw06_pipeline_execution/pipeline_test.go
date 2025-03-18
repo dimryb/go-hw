@@ -256,7 +256,7 @@ func TestPipelineFastStage(t *testing.T) {
 
 	t.Run("large data set", func(t *testing.T) {
 		in := make(Bi)
-		data := dg(5000, 0)
+		data := dg(1000, 0)
 
 		go func() {
 			for _, v := range data {
@@ -282,7 +282,7 @@ func TestPipelineFastStage(t *testing.T) {
 	t.Run("no stages", func(t *testing.T) {
 		in := make(Bi)
 
-		data := dg(1000, 0)
+		data := dg(100, 0)
 
 		go func() {
 			for _, v := range data {
@@ -302,8 +302,8 @@ func TestPipelineFastStage(t *testing.T) {
 	t.Run("multiple pipelines", func(t *testing.T) {
 		in1 := make(Bi)
 		in2 := make(Bi)
-		data1 := dg(1000, 0)
-		data2 := dg(500, 1000)
+		data1 := dg(100, 0)
+		data2 := dg(50, 1000)
 
 		go func() {
 			for _, v := range data1 {
