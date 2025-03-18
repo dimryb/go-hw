@@ -12,10 +12,11 @@ func runStage(in In, done In, stage Stage) Out {
 	out := make(Bi)
 	buf := make(Bi)
 
+	stageOut := stage(in)
+
 	go func() {
 		defer close(buf)
 
-		stageOut := stage(in)
 		for v := range stageOut {
 			select {
 			case buf <- v:

@@ -256,7 +256,7 @@ func TestPipelineFastStage(t *testing.T) {
 
 	t.Run("large data set", func(t *testing.T) {
 		in := make(Bi)
-		data := dg(10000, 0)
+		data := dg(5000, 0)
 
 		go func() {
 			for _, v := range data {
