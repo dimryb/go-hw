@@ -20,7 +20,9 @@ func runStage(in In, done In, stage Stage) Out {
 			select {
 			case buf <- v:
 			case <-done:
+				//revive:disable-next-line:empty-block
 				for range stageOut {
+					// Ожидаем закрытие канала stageOut
 				}
 				return
 			}
