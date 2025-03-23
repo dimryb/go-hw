@@ -2,6 +2,11 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"sync"
+	"time"
+
+	"github.com/cheggaaa/pb/v3"
 )
 
 var (
@@ -18,5 +23,40 @@ func init() {
 
 func main() {
 	flag.Parse()
-	// Place your code here.
+
+	fmt.Println("From:", from)
+	fmt.Println("To:", to)
+	fmt.Println("Limit:", limit)
+	fmt.Println("Offset:", offset)
+
+	count := 10000
+
+	var wg sync.WaitGroup
+	progress := make(chan int)
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for i := 0; i < count; i++ {
+			progress <- 1
+			time.Sleep(time.Millisecond)
+		}
+		close(progress)
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		bar := pb.StartNew(count)
+		bar.SetRefreshRate(time.Millisecond * 100)
+		for v := range progress {
+			bar.Add(v)
+		}
+		bar.Finish()
+		fmt.Println("Bar Finished!")
+	}()
+
+	wg.Wait()
+
+	fmt.Println("Progress completed!")
 }
