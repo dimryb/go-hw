@@ -22,6 +22,12 @@ func TestCopy(t *testing.T) {
 			limit:      0,
 			outputFile: "out_offset0_limit0.txt",
 		},
+		{
+			name:       "offset=0, limit=10",
+			offset:     0,
+			limit:      10,
+			outputFile: "out_offset0_limit10.txt",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
