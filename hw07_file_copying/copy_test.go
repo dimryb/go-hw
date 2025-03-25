@@ -119,3 +119,19 @@ func TestCopyNullDeviceUnsupportedFile(t *testing.T) {
 	assert.Error(t, err, "Copy should return an error for unsupported files")
 	assert.True(t, errors.Is(err, ErrUnsupportedFile), "Error should be ErrUnsupportedFile")
 }
+
+func TestCopyOffsetExceedsFileSize(t *testing.T) {
+	inputFile := filepath.Join("testdata", "input.txt")
+
+	tmpFile, err := os.CreateTemp("", "test_copy_*.txt")
+	if err != nil {
+		t.Fatalf("failed to create temporary file: %v", err)
+	}
+	defer os.Remove(tmpFile.Name())
+	tmpFilePath := tmpFile.Name()
+	tmpFile.Close()
+
+	err = Copy(inputFile, tmpFilePath, 100000, 10, nil)
+	assert.Error(t, err, "Copy should return an error when offset exceeds file size")
+	assert.True(t, errors.Is(err, ErrOffsetExceedsFileSize), "Error should be ErrOffsetExceedsFileSize")
+}
