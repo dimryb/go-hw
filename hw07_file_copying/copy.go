@@ -12,18 +12,12 @@ var (
 	ErrOffsetExceedsFileSize = errors.New("offset exceeds file size")
 )
 
-func Copy(fromPath, toPath string, offset, limit int64, progress chan<- int64) error {
-	var closeErr error
-
+func Copy(fromPath, toPath string, offset, limit int64, progress chan<- int64) (err error) {
 	inFile, err := os.Open(fromPath)
 	if err != nil {
 		return fmt.Errorf("failed to open input file: %w", err)
 	}
-	defer func() {
-		if err := inFile.Close(); err != nil && closeErr == nil {
-			closeErr = fmt.Errorf("failed to close input file: %w", err)
-		}
-	}()
+	defer closeFile(inFile, &err)
 
 	fileInfo, err := inFile.Stat()
 	if err != nil {
@@ -66,18 +60,14 @@ func Copy(fromPath, toPath string, offset, limit int64, progress chan<- int64) e
 		return fmt.Errorf("failed to create output file: %w", err)
 	}
 
-	defer func() {
-		if err := outFile.Close(); err != nil && closeErr == nil {
-			closeErr = fmt.Errorf("failed to close output file: %w", err)
-		}
-	}()
+	defer closeFile(outFile, &err)
 
 	err = copyProcess(inFile, outFile, limit, progress)
 	if err != nil {
 		return fmt.Errorf("failed to copy data: %w", err)
 	}
 
-	return closeErr
+	return nil
 }
 
 func getSize(in io.Seeker) (int64, error) {
@@ -134,4 +124,10 @@ func copyProcess(in io.Reader, out io.Writer, limit int64, progress chan<- int64
 	}
 
 	return nil
+}
+
+func closeFile(file *os.File, err *error) {
+	if cerr := file.Close(); cerr != nil && *err == nil {
+		*err = fmt.Errorf("failed to close file: %w", cerr)
+	}
 }
