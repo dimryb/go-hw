@@ -66,7 +66,7 @@ func TestCopy(t *testing.T) {
 			tmpFilePath := tmpFile.Name()
 			tmpFile.Close()
 
-			err = Copy(inputFile, tmpFilePath, tt.offset, tt.limit)
+			err = Copy(inputFile, tmpFilePath, tt.offset, tt.limit, nil)
 			assert.NoError(t, err, "Copy should not return an error")
 
 			result, err := os.ReadFile(tmpFilePath)

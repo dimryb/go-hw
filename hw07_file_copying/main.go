@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
 	"sync"
 	"time"
 
@@ -29,31 +30,47 @@ func main() {
 	fmt.Println("Limit:", limit)
 	fmt.Println("Offset:", offset)
 
-	count := 10000
-
 	var wg sync.WaitGroup
-	progress := make(chan int)
+	progress := make(chan int64)
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		for i := 0; i < count; i++ {
-			progress <- 1
-			time.Sleep(time.Millisecond)
+
+		inFile, err := os.Open(from)
+		if err != nil {
+			fmt.Println("Failed to open input file:", err)
+			close(progress)
+			return
 		}
-		close(progress)
+		defer inFile.Close()
+
+		totalSize, err := getSize(inFile) // Используем getSize
+		if err != nil {
+			fmt.Println("Failed to get file size:", err)
+			close(progress)
+			return
+		}
+
+		if limit == 0 || limit > totalSize-offset {
+			limit = totalSize - offset
+		}
+
+		bar := pb.Start64(limit)
+		bar.SetRefreshRate(time.Millisecond * 100)
+		defer bar.Finish()
+		for p := range progress {
+			bar.SetCurrent(p)
+		}
 	}()
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		bar := pb.StartNew(count)
-		bar.SetRefreshRate(time.Millisecond * 100)
-		for v := range progress {
-			bar.Add(v)
+		err := Copy(from, to, offset, limit, progress)
+		if err != nil {
+			fmt.Println("Error during copy:", err)
 		}
-		bar.Finish()
-		fmt.Println("Bar Finished!")
 	}()
 
 	wg.Wait()

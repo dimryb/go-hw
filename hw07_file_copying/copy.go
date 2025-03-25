@@ -12,7 +12,7 @@ var (
 	ErrOffsetExceedsFileSize = errors.New("offset exceeds file size")
 )
 
-func Copy(fromPath, toPath string, offset, limit int64) error {
+func Copy(fromPath, toPath string, offset, limit int64, progress chan<- int64) error {
 	var closeErr error
 
 	inFile, err := os.Open(fromPath)
@@ -53,16 +53,6 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		if err := outFile.Close(); err != nil && closeErr == nil {
 			closeErr = fmt.Errorf("failed to close output file: %w", err)
 		}
-	}()
-
-	progress := make(chan int64)
-	go func() {
-		var lastProgress int64
-		for p := range progress {
-			fmt.Printf("Copied: %d bytes\n", p-lastProgress)
-			lastProgress = p
-		}
-		fmt.Println("Copying completed!")
 	}()
 
 	err = copyProcess(inFile, outFile, limit, progress)
