@@ -25,10 +25,10 @@ func init() {
 func main() {
 	flag.Parse()
 
-	fmt.Println("From:", from)
-	fmt.Println("To:", to)
-	fmt.Println("Limit:", limit)
-	fmt.Println("Offset:", offset)
+	if from == "" || to == "" {
+		fmt.Println("Both -from and -to arguments are required!")
+		return
+	}
 
 	var wg sync.WaitGroup
 	progress := make(chan int64)
@@ -40,7 +40,6 @@ func main() {
 		inFile, err := os.Open(from)
 		if err != nil {
 			fmt.Println("Failed to open input file:", err)
-			close(progress)
 			return
 		}
 		defer inFile.Close()
@@ -48,7 +47,6 @@ func main() {
 		totalSize, err := getSize(inFile) // Используем getSize
 		if err != nil {
 			fmt.Println("Failed to get file size:", err)
-			close(progress)
 			return
 		}
 
