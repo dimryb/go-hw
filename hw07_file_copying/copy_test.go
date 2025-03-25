@@ -1,8 +1,10 @@
 package main
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -84,4 +86,36 @@ func TestCopy(t *testing.T) {
 				"output content does not match expected content")
 		})
 	}
+}
+
+func TestCopyNonRegularFile(t *testing.T) {
+	dir, err := os.MkdirTemp("", "test_dir")
+	if err != nil {
+		t.Fatalf("failed to create temporary directory: %v", err)
+	}
+	defer os.RemoveAll(dir)
+
+	outputFile := filepath.Join(dir, "output.txt")
+	err = Copy(dir, outputFile, 0, 10, nil)
+	assert.Error(t, err, "Copy should return an error for non-regular files")
+	assert.True(t, errors.Is(err, ErrUnsupportedFile), "Error should be ErrUnsupportedFile")
+}
+
+func TestCopyNullDeviceUnsupportedFile(t *testing.T) {
+	nullDevice := "/dev/null"
+	if runtime.GOOS == "windows" {
+		nullDevice = "NUL"
+	}
+
+	tmpFile, err := os.CreateTemp("", "test_copy_*.txt")
+	if err != nil {
+		t.Fatalf("failed to create temporary file: %v", err)
+	}
+	defer os.Remove(tmpFile.Name())
+	tmpFilePath := tmpFile.Name()
+	tmpFile.Close()
+
+	err = Copy(nullDevice, tmpFilePath, 0, 10, nil)
+	assert.Error(t, err, "Copy should return an error for unsupported files")
+	assert.True(t, errors.Is(err, ErrUnsupportedFile), "Error should be ErrUnsupportedFile")
 }

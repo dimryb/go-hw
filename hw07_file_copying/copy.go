@@ -19,12 +19,29 @@ func Copy(fromPath, toPath string, offset, limit int64, progress chan<- int64) e
 	if err != nil {
 		return fmt.Errorf("failed to open input file: %w", err)
 	}
-
 	defer func() {
 		if err := inFile.Close(); err != nil && closeErr == nil {
 			closeErr = fmt.Errorf("failed to close input file: %w", err)
 		}
 	}()
+
+	fileInfo, err := inFile.Stat()
+	if err != nil {
+		return fmt.Errorf("failed to get file info: %w", err)
+	}
+
+	if !fileInfo.Mode().IsRegular() {
+		return ErrUnsupportedFile
+	}
+
+	_, err = inFile.Seek(0, io.SeekEnd)
+	if err != nil {
+		return ErrUnsupportedFile
+	}
+	_, err = inFile.Seek(0, io.SeekStart)
+	if err != nil {
+		return ErrUnsupportedFile
+	}
 
 	totalSize, err := getSize(inFile)
 	if err != nil {
