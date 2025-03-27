@@ -5,9 +5,6 @@ import (
 	"fmt"
 	"os"
 	"sync"
-	"time"
-
-	"github.com/cheggaaa/pb/v3" //nolint:depguard
 )
 
 var (
@@ -54,11 +51,10 @@ func main() {
 			limit = totalSize - offset
 		}
 
-		bar := pb.Start64(limit)
-		bar.SetRefreshRate(time.Millisecond * 100)
+		bar := NewProgressBar(limit)
 		defer bar.Finish()
 		for p := range progress {
-			bar.SetCurrent(p)
+			bar.Update(p)
 		}
 	}()
 
@@ -72,6 +68,4 @@ func main() {
 	}()
 
 	wg.Wait()
-
-	fmt.Println("Progress completed!")
 }
