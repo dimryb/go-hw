@@ -2,6 +2,9 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"os"
+	"sync"
 )
 
 var (
@@ -18,5 +21,51 @@ func init() {
 
 func main() {
 	flag.Parse()
-	// Place your code here.
+
+	if from == "" || to == "" {
+		fmt.Println("Both -from and -to arguments are required!")
+		return
+	}
+
+	var wg sync.WaitGroup
+	progress := make(chan int64)
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		inFile, err := os.Open(from)
+		if err != nil {
+			fmt.Println("Failed to open input file:", err)
+			return
+		}
+		defer inFile.Close()
+
+		totalSize, err := getSize(inFile) // Используем getSize
+		if err != nil {
+			fmt.Println("Failed to get file size:", err)
+			return
+		}
+
+		if limit == 0 || limit > totalSize-offset {
+			limit = totalSize - offset
+		}
+
+		bar := NewProgressBar(limit)
+		defer bar.Finish()
+		for p := range progress {
+			bar.Update(p)
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		err := Copy(from, to, offset, limit, progress)
+		if err != nil {
+			fmt.Println("Error during copy:", err)
+		}
+	}()
+
+	wg.Wait()
 }
