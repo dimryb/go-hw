@@ -19,6 +19,13 @@ func main() {
 	_ = command
 	_ = args
 
+	env, err := ReadDir(envDir)
+	if err != nil {
+		fmt.Printf("Error: failed to read environment directory '%s': %s\n", envDir, err.Error())
+	}
+
+	_ = env
+
 	fmt.Println(
 		"HELLO is (\"hello\")\n" +
 			"BAR is (bar)\n" +
