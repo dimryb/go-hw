@@ -61,6 +61,7 @@ func TestRunCmd(t *testing.T) {
 }
 
 func createTestScript(t *testing.T, dir string) string {
+	t.Helper()
 	scriptName := "test_script.sh"
 	scriptPath := filepath.Join(dir, scriptName)
 	scriptContent := `#!/bin/sh
