@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 // RunCmd runs a command + arguments (cmd) with environment variables from env.
@@ -35,6 +36,14 @@ func getEnvironment(env Environment) []string {
 		return nil
 	}
 	var environment []string
+
+	for _, envVar := range os.Environ() {
+		key := envVar[:strings.Index(envVar, "=")]
+		if _, exists := env[key]; !exists {
+			environment = append(environment, envVar)
+		}
+	}
+
 	for key, val := range env {
 		if !val.NeedRemove {
 			environment = append(environment, fmt.Sprintf("%s=%s", key, val.Value))

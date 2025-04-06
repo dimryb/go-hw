@@ -72,7 +72,7 @@ if [ "$1" = "printenv" ]; then
     exit 0
 fi
 exit 0`
-	err := os.WriteFile(scriptPath, []byte(scriptContent), 0755)
+	err := os.WriteFile(scriptPath, []byte(scriptContent), 0o755)
 	if err != nil {
 		t.Fatalf("failed to create test script: %v", err)
 	}
