@@ -38,7 +38,11 @@ func getEnvironment(env Environment) []string {
 	var environment []string
 
 	for _, envVar := range os.Environ() {
-		key := envVar[:strings.Index(envVar, "=")]
+		index := strings.Index(envVar, "=")
+		if index == -1 {
+			continue
+		}
+		key := envVar[:index]
 		if _, exists := env[key]; !exists {
 			environment = append(environment, envVar)
 		}
