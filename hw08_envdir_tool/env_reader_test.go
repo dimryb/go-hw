@@ -78,6 +78,32 @@ func TestReadDir(t *testing.T) {
 			hasError: false,
 		},
 		{
+			name: "Multiline file",
+			files: map[string]string{
+				"MULTILINE_VAR": "first line\nsecond line\nthird line",
+			},
+			expected: Environment{
+				"MULTILINE_VAR": {
+					Value:      "first line",
+					NeedRemove: false,
+				},
+			},
+			hasError: false,
+		},
+		{
+			name: "File with spaces only",
+			files: map[string]string{
+				"SPACES_ONLY": "   ",
+			},
+			expected: Environment{
+				"SPACES_ONLY": {
+					Value:      "",
+					NeedRemove: true,
+				},
+			},
+			hasError: false,
+		},
+		{
 			name: "With mixed files",
 			files: map[string]string{
 				"VALID_VAR":   "value",
@@ -100,7 +126,7 @@ func TestReadDir(t *testing.T) {
 					NeedRemove: false,
 				},
 				"TRIMMED_VAR": {
-					Value:      "trimmed",
+					Value:      "   trimmed",
 					NeedRemove: false,
 				},
 			},

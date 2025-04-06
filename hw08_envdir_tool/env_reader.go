@@ -36,7 +36,11 @@ func ReadDir(dir string) (Environment, error) {
 			return nil, fmt.Errorf("failed to read file '%s': %w", filePath, err)
 		}
 
-		value := strings.TrimRight(string(content), " ")
+		lines := strings.Split(string(content), "\n")
+		firstLine := lines[0]
+
+		value := strings.TrimRight(firstLine, " \t")
+		value = strings.ReplaceAll(value, "\x00", "\n")
 
 		if value == "" {
 			env[file.Name()] = EnvValue{
@@ -44,7 +48,6 @@ func ReadDir(dir string) (Environment, error) {
 				NeedRemove: true,
 			}
 		} else {
-			value = strings.ReplaceAll(value, "\x00", "\n")
 			env[file.Name()] = EnvValue{
 				Value:      value,
 				NeedRemove: false,
