@@ -15,24 +15,22 @@ func main() {
 	command := os.Args[2]
 	args := os.Args[3:]
 
-	_ = envDir
-	_ = command
-	_ = args
-
 	env, err := ReadDir(envDir)
 	if err != nil {
 		fmt.Printf("Error: failed to read environment directory '%s': %s\n", envDir, err.Error())
+		os.Exit(1)
 	}
 
-	_ = env
+	code := RunCmd(append([]string{command}, args...), env)
 
-	fmt.Println(
-		"HELLO is (\"hello\")\n" +
-			"BAR is (bar)\n" +
-			"FOO is (   foo\nwith new line)\n" +
-			"UNSET is ()\n" +
-			"ADDED is (from original env)\n" +
-			"EMPTY is ()\n" +
-			"arguments are arg1=1 arg2=2",
-	)
+	//fmt.Println(
+	//	"HELLO is (\"hello\")\n" +
+	//		"BAR is (bar)\n" +
+	//		"FOO is (   foo\nwith new line)\n" +
+	//		"UNSET is ()\n" +
+	//		"ADDED is (from original env)\n" +
+	//		"EMPTY is ()\n" +
+	//		"arguments are arg1=1 arg2=2",
+	//)
+	os.Exit(code)
 }
