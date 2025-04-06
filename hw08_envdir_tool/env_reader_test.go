@@ -63,7 +63,7 @@ func TestReadDir(t *testing.T) {
 			},
 			expected: Environment{
 				"TRIMMED_VAR": {
-					Value:      "trimmed",
+					Value:      "   trimmed",
 					NeedRemove: false,
 				},
 			},
