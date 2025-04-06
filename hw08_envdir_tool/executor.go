@@ -14,6 +14,7 @@ func RunCmd(cmd []string, env Environment) (returnCode int) {
 		fmt.Println("Error: command is empty")
 		return 1
 	}
+	// #nosec G204: Command arguments are trusted
 	command := exec.Command(cmd[0], cmd[1:]...)
 	command.Env = getEnvironment(env)
 
