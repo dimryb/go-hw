@@ -48,7 +48,9 @@ func TestValidate(t *testing.T) {
 			ErrorValidateValueMustBeStruct,
 		},
 		{
-			User{},
+			User{
+				ID: "123",
+			},
 			nil,
 		},
 		// ...
