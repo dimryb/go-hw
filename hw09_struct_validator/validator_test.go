@@ -44,6 +44,10 @@ func TestValidate(t *testing.T) {
 		expectedErr error
 	}{
 		{
+			0,
+			ErrorValidateValueMustBeStruct,
+		},
+		{
 			User{},
 			nil,
 		},
@@ -57,7 +61,7 @@ func TestValidate(t *testing.T) {
 			t.Parallel()
 
 			err := Validate(tt.in)
-			assert.Equal(t, tt.expectedErr, err)
+			assert.ErrorIs(t, err, tt.expectedErr)
 		})
 	}
 }
