@@ -96,6 +96,53 @@ func TestValidateStruct(t *testing.T) {
 			},
 			expectedErr: ErrorInvalidRuleFormat,
 		},
+		{
+			name: "valid version",
+			in: App{
+				Version: "v1.00",
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "version too short",
+			in: App{
+				Version: "v1.0",
+			},
+			expectedErr: ErrorLengthMustBe,
+		},
+		{
+			name: "valid token",
+			in: Token{
+				Header:    []byte{1, 2, 3},
+				Payload:   []byte{4, 5, 6},
+				Signature: []byte{7, 8, 9},
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "valid response",
+			in: Response{
+				Code: 200,
+				Body: "OK",
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "invalid code",
+			in: Response{
+				Code: 300,
+				Body: "Not Found",
+			},
+			expectedErr: ErrorValueMustBeOneOf,
+		},
+		{
+			name: "empty body",
+			in: Response{
+				Code: 404,
+				Body: "",
+			},
+			expectedErr: nil,
+		},
 	}
 
 	for _, tt := range tests {
