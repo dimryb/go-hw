@@ -38,6 +38,17 @@ type (
 	}
 )
 
+type (
+	Meta struct {
+		CreatedAt string `validate:"regexp:^\\d{4}-\\d{2}-\\d{2}$"`
+	}
+
+	MetaUser struct {
+		Meta `validate:"nested"`
+		Name string `validate:"len:10"`
+	}
+)
+
 func TestValidate(t *testing.T) {
 	t.Run("Struct validation", TestValidateStruct)
 	t.Run("String validation", TestValidateStrings)
@@ -459,6 +470,42 @@ func TestValidateSlices(t *testing.T) {
 				Field: []int{5, 15, 3},
 			},
 			expectedErr: ErrorMaxValue,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Validate(tt.in)
+			assertValidationErrors(t, err, tt.expectedErr)
+		})
+	}
+}
+
+func TestValidateNestedStructuresWithNestedTag(t *testing.T) {
+	tests := []struct {
+		name        string
+		in          interface{}
+		expectedErr error
+	}{
+		{
+			name: "valid nested structure with nested tag",
+			in: MetaUser{
+				Meta: Meta{
+					CreatedAt: "2023-10-01",
+				},
+				Name: "JohnDoe123",
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "invalid nested structure with nested tag",
+			in: MetaUser{
+				Meta: Meta{
+					CreatedAt: "2023/10/01",
+				},
+				Name: "JohnDoe123",
+			},
+			expectedErr: ErrorDoesNotMatchRegexp,
 		},
 	}
 

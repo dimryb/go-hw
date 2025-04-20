@@ -88,14 +88,18 @@ func validateField(fieldName string, value reflect.Value, tag string, errs *Vali
 
 func applyRule(value reflect.Value, rule string, fieldName string, errs *ValidationErrors) {
 	parts := strings.SplitN(rule, ":", 2)
-	if len(parts) != 2 {
+	ruleName := rule
+	var ruleValue string
+
+	if len(parts) == 2 {
+		ruleName, ruleValue = parts[0], parts[1]
+	} else if ruleName != "nested" {
 		*errs = append(*errs, ValidationError{
 			Field: fieldName,
 			Err:   fmt.Errorf("%w: %s", ErrorInvalidRuleFormat, rule),
 		})
 		return
 	}
-	ruleName, ruleValue := parts[0], parts[1]
 
 	switch value.Kind() {
 	case reflect.String:
@@ -123,6 +127,26 @@ func applyRule(value reflect.Value, rule string, fieldName string, errs *Validat
 		if err != nil {
 			*errs = append(*errs, ValidationError{Field: fieldName, Err: err})
 		}
+	case reflect.Struct:
+		if ruleName == "nested" {
+			nestedErr := Validate(value.Interface())
+			if nestedErr != nil {
+				var nestedValidationErrs ValidationErrors
+				if errors.As(nestedErr, &nestedValidationErrs) {
+					for _, ve := range nestedValidationErrs {
+						*errs = append(*errs, ValidationError{
+							Field: fieldName + "." + ve.Field,
+							Err:   ve.Err,
+						})
+					}
+				} else {
+					*errs = append(*errs, ValidationError{
+						Field: fieldName,
+						Err:   nestedErr,
+					})
+				}
+			}
+		}
 	case reflect.Invalid,
 		reflect.Bool,
 		reflect.Complex64, reflect.Complex128,
@@ -132,7 +156,6 @@ func applyRule(value reflect.Value, rule string, fieldName string, errs *Validat
 		reflect.Interface,
 		reflect.Map,
 		reflect.Ptr,
-		reflect.Struct,
 		reflect.UnsafePointer:
 		*errs = append(*errs, ValidationError{
 			Field: fieldName,
