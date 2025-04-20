@@ -9,6 +9,7 @@ import (
 
 var (
 	ErrorValidateValueMustBeStruct = errors.New("value must be a struct")
+	ErrorInvalidRuleFormat         = errors.New("invalid rule format")
 )
 
 type ValidationError struct {
@@ -29,7 +30,9 @@ func (v ValidationErrors) Error() string {
 func Validate(v interface{}) error {
 	val := reflect.ValueOf(v)
 	if val.Kind() != reflect.Struct {
-		return ErrorValidateValueMustBeStruct
+		return ValidationErrors{
+			ValidationError{Field: "", Err: ErrorValidateValueMustBeStruct},
+		}
 	}
 
 	var errs ValidationErrors
@@ -60,7 +63,6 @@ func Validate(v interface{}) error {
 
 func validateField(fieldName string, value reflect.Value, tag string, errs *ValidationErrors) {
 	fmt.Println("fieldName:", fieldName)
-	fmt.Println("value:", value)
 	fmt.Println("tag:", tag)
 	rules := strings.Split(tag, "|")
 	for _, rule := range rules {
@@ -76,7 +78,7 @@ func applyRule(value reflect.Value, rule string) error {
 	fmt.Println("value:", value)
 	parts := strings.SplitN(rule, ":", 2)
 	if len(parts) != 2 {
-		return fmt.Errorf("invalid rule format: %s", rule)
+		return fmt.Errorf("%w: %s", ErrorInvalidRuleFormat, rule)
 	}
 	ruleName, ruleValue := parts[0], parts[1]
 	fmt.Println("ruleName:", ruleName)

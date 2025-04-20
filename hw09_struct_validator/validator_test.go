@@ -2,6 +2,7 @@ package hw09structvalidator
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -40,22 +41,35 @@ type (
 
 func TestValidate(t *testing.T) {
 	tests := []struct {
+		name        string
 		in          interface{}
 		expectedErr error
 	}{
 		{
-			0,
-			ErrorValidateValueMustBeStruct,
+			name:        "non-struct input",
+			in:          0,
+			expectedErr: ErrorValidateValueMustBeStruct,
 		},
 		{
-			User{
-				ID:  "123",
-				Age: 19,
+			name: "valid user",
+			in: User{
+				ID:     "123e4567-e89b",
+				Age:    19,
+				Email:  "valid.user@example.com",
+				Role:   "admin",
+				Phones: []string{"12345678901"},
 			},
-			nil,
+			expectedErr: nil,
 		},
-		// ...
-		// Place your code here.
+		{
+			name: "invalid rule format",
+			in: struct {
+				Field string `validate:"min"`
+			}{
+				Field: "test",
+			},
+			expectedErr: ErrorInvalidRuleFormat,
+		},
 	}
 
 	for i, tt := range tests {
@@ -64,7 +78,27 @@ func TestValidate(t *testing.T) {
 			t.Parallel()
 
 			err := Validate(tt.in)
-			assert.ErrorIs(t, err, tt.expectedErr)
+			if tt.expectedErr == nil {
+				assert.NoError(t, err)
+			} else {
+				fmt.Println("expected:", tt.expectedErr)
+				fmt.Println("actual:", err)
+				var validationErr ValidationErrors
+				if errors.As(err, &validationErr) {
+					found := false
+					for _, ve := range validationErr {
+						fmt.Println("ve:", ve)
+						if errors.Is(ve.Err, tt.expectedErr) {
+							found = true
+							break
+						}
+					}
+					assert.True(t, found, "expected error to contain %v, got %v", tt.expectedErr, err)
+				} else {
+					assert.Fail(t, "expected ValidationErrors, got other error", "expected: %v, got: %v", tt.expectedErr, err)
+				}
+				fmt.Println("validationErr:", validationErr)
+			}
 		})
 	}
 }
