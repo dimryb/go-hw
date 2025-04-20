@@ -8,8 +8,9 @@ import (
 )
 
 var (
-	ErrorValidateValueMustBeStruct = errors.New("value must be a struct")
-	ErrorInvalidRuleFormat         = errors.New("invalid rule format")
+	ErrorValueMustBeStruct = errors.New("value must be a struct")
+	ErrorInvalidRuleFormat = errors.New("invalid rule format")
+	ErrorUnsupportedType   = errors.New("unsupported type")
 )
 
 type ValidationError struct {
@@ -31,7 +32,7 @@ func Validate(v interface{}) error {
 	val := reflect.ValueOf(v)
 	if val.Kind() != reflect.Struct {
 		return ValidationErrors{
-			ValidationError{Field: "", Err: ErrorValidateValueMustBeStruct},
+			ValidationError{Field: "", Err: ErrorValueMustBeStruct},
 		}
 	}
 
@@ -83,6 +84,17 @@ func applyRule(value reflect.Value, rule string) error {
 	ruleName, ruleValue := parts[0], parts[1]
 	fmt.Println("ruleName:", ruleName)
 	fmt.Println("ruleValue:", ruleValue)
+
+	switch value.Kind() {
+	case reflect.String:
+		return nil
+	case reflect.Int:
+		return nil
+	case reflect.Slice:
+		return nil
+	default:
+		return fmt.Errorf("%w: %s", ErrorUnsupportedType, value.Kind())
+	}
 
 	return nil
 }

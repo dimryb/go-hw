@@ -48,7 +48,7 @@ func TestValidate(t *testing.T) {
 		{
 			name:        "non-struct input",
 			in:          0,
-			expectedErr: ErrorValidateValueMustBeStruct,
+			expectedErr: ErrorValueMustBeStruct,
 		},
 		{
 			name: "valid user",
@@ -69,6 +69,15 @@ func TestValidate(t *testing.T) {
 				Field: "test",
 			},
 			expectedErr: ErrorInvalidRuleFormat,
+		},
+		{
+			name: "unsupported type",
+			in: struct {
+				Field complex128 `validate:"len:5"`
+			}{
+				Field: 42 + 2i,
+			},
+			expectedErr: ErrorUnsupportedType,
 		},
 	}
 
@@ -95,7 +104,11 @@ func TestValidate(t *testing.T) {
 					}
 					assert.True(t, found, "expected error to contain %v, got %v", tt.expectedErr, err)
 				} else {
-					assert.Fail(t, "expected ValidationErrors, got other error", "expected: %v, got: %v", tt.expectedErr, err)
+					assert.Fail(
+						t, "expected ValidationErrors, got other error",
+						"expected: %v, got: %v",
+						tt.expectedErr, err,
+					)
 				}
 				fmt.Println("validationErr:", validationErr)
 			}
