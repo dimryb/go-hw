@@ -98,6 +98,15 @@ func TestValidate(t *testing.T) {
 			},
 			expectedErr: ErrorLengthMustBe,
 		},
+		{
+			name: "unknown rule for string",
+			in: struct {
+				Field string `validate:"unknown:123"`
+			}{
+				Field: "test",
+			},
+			expectedErr: ErrorUnknownRuleForString,
+		},
 	}
 
 	for i, tt := range tests {

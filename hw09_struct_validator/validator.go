@@ -9,11 +9,12 @@ import (
 )
 
 var (
-	ErrorValueMustBeStruct = errors.New("value must be a struct")
-	ErrorInvalidRuleFormat = errors.New("invalid rule format")
-	ErrorUnsupportedType   = errors.New("unsupported type")
-	ErrorInvalidLenValue   = errors.New("invalid len value")
-	ErrorLengthMustBe      = errors.New("length must be")
+	ErrorValueMustBeStruct    = errors.New("value must be a struct")
+	ErrorInvalidRuleFormat    = errors.New("invalid rule format")
+	ErrorUnsupportedType      = errors.New("unsupported type")
+	ErrorInvalidLenValue      = errors.New("invalid len value")
+	ErrorLengthMustBe         = errors.New("length must be")
+	ErrorUnknownRuleForString = errors.New("unknown rule for string")
 )
 
 type ValidationError struct {
@@ -110,6 +111,12 @@ func validateString(s string, ruleName, ruleValue string) error {
 		if len(s) != length {
 			return fmt.Errorf("%w %d", ErrorLengthMustBe, length)
 		}
+	case "regexp":
+
+	case "in":
+
+	default:
+		return fmt.Errorf("%w: %s", ErrorUnknownRuleForString, ruleName)
 	}
 	return nil
 }
