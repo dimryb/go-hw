@@ -49,7 +49,8 @@ func TestValidate(t *testing.T) {
 		},
 		{
 			User{
-				ID: "123",
+				ID:  "123",
+				Age: 19,
 			},
 			nil,
 		},

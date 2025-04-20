@@ -32,7 +32,7 @@ func Validate(v interface{}) error {
 		return ErrorValidateValueMustBeStruct
 	}
 
-	var errors ValidationErrors
+	var errs ValidationErrors
 	t := val.Type()
 
 	for i := 0; i < val.NumField(); i++ {
@@ -40,7 +40,6 @@ func Validate(v interface{}) error {
 		value := val.Field(i)
 
 		if field.PkgPath != "" {
-			fmt.Println("PkgPath:", field.PkgPath)
 			continue
 		}
 
@@ -49,23 +48,39 @@ func Validate(v interface{}) error {
 			continue
 		}
 
-		fieldName := field.Name
-		err := validateField(fieldName, value, tag)
-		if err != nil {
-			errors = append(errors, ValidationError{fieldName, err})
-		}
+		validateField(field.Name, value, tag, &errs)
 	}
 
-	if len(errors) > 0 {
-		return errors
+	if len(errs) > 0 {
+		return errs
 	}
 
 	return nil
 }
 
-func validateField(fieldName string, value reflect.Value, tag string) error {
+func validateField(fieldName string, value reflect.Value, tag string, errs *ValidationErrors) {
 	fmt.Println("fieldName:", fieldName)
 	fmt.Println("value:", value)
 	fmt.Println("tag:", tag)
+	rules := strings.Split(tag, "|")
+	for _, rule := range rules {
+		err := applyRule(value, rule)
+		if err != nil {
+			*errs = append(*errs, ValidationError{Field: fieldName, Err: err})
+		}
+	}
+}
+
+func applyRule(value reflect.Value, rule string) error {
+	fmt.Println("rule:", rule)
+	fmt.Println("value:", value)
+	parts := strings.SplitN(rule, ":", 2)
+	if len(parts) != 2 {
+		return fmt.Errorf("invalid rule format: %s", rule)
+	}
+	ruleName, ruleValue := parts[0], parts[1]
+	fmt.Println("ruleName:", ruleName)
+	fmt.Println("ruleValue:", ruleValue)
+
 	return nil
 }
