@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -15,6 +16,9 @@ var (
 	ErrorInvalidLenValue      = errors.New("invalid len value")
 	ErrorLengthMustBe         = errors.New("length must be")
 	ErrorUnknownRuleForString = errors.New("unknown rule for string")
+	ErrorValueMustBeOneOf     = errors.New("value must be one of")
+	ErrorInvalidRegexp        = errors.New("invalid regexp")
+	ErrorDoesNotMatchRegexp   = errors.New("does not match regexp")
 )
 
 type ValidationError struct {
@@ -127,11 +131,29 @@ func validateString(s string, ruleName, ruleValue string) error {
 			return fmt.Errorf("%w %d", ErrorLengthMustBe, length)
 		}
 	case "regexp":
-
+		matched, err := regexp.MatchString(ruleValue, s)
+		if err != nil {
+			return fmt.Errorf("%w: %s", ErrorInvalidRegexp, ruleValue)
+		}
+		if !matched {
+			return fmt.Errorf("%w: %s", ErrorDoesNotMatchRegexp, ruleValue)
+		}
 	case "in":
-
+		values := strings.Split(ruleValue, ",")
+		if !contains(values, s) {
+			return fmt.Errorf("%w %s", ErrorValueMustBeOneOf, ruleValue)
+		}
 	default:
 		return fmt.Errorf("%w: %s", ErrorUnknownRuleForString, ruleName)
 	}
 	return nil
+}
+
+func contains(arr []string, str string) bool {
+	for _, v := range arr {
+		if v == str {
+			return true
+		}
+	}
+	return false
 }

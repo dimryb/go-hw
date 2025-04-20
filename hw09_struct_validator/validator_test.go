@@ -55,7 +55,7 @@ func TestValidate(t *testing.T) {
 			in: User{
 				ID:     "123e4567-e89b-12d3-a456-426614174000",
 				Age:    19,
-				Email:  "valid.user@example.com",
+				Email:  "valid_user@example.com",
 				Role:   "admin",
 				Phones: []string{"12345678901"},
 			},
@@ -106,6 +106,33 @@ func TestValidate(t *testing.T) {
 				Field: "test",
 			},
 			expectedErr: ErrorUnknownRuleForString,
+		},
+		{
+			name: "value must be one of",
+			in: struct {
+				Field string `validate:"in:admin,user"`
+			}{
+				Field: "guest",
+			},
+			expectedErr: ErrorValueMustBeOneOf,
+		},
+		{
+			name: "invalid regexp",
+			in: struct {
+				Field string `validate:"regexp:[a-z"`
+			}{
+				Field: "test",
+			},
+			expectedErr: ErrorInvalidRegexp,
+		},
+		{
+			name: "does not match regexp",
+			in: struct {
+				Field string `validate:"regexp:^\\d+$"`
+			}{
+				Field: "abc",
+			},
+			expectedErr: ErrorDoesNotMatchRegexp,
 		},
 	}
 
