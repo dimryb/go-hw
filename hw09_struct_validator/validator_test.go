@@ -46,8 +46,10 @@ func TestValidate(t *testing.T) {
 }
 
 func assertValidationErrors(t *testing.T, err error, expectedErr error) {
+	t.Helper()
 	var validationErr ValidationErrors
-	if errors.As(err, &validationErr) {
+	switch {
+	case errors.As(err, &validationErr):
 		found := false
 		for _, ve := range validationErr {
 			if errors.Is(ve.Err, expectedErr) {
@@ -56,9 +58,9 @@ func assertValidationErrors(t *testing.T, err error, expectedErr error) {
 			}
 		}
 		assert.True(t, found, "expected error to contain %v, got %v", expectedErr, err)
-	} else if expectedErr == nil {
+	case expectedErr == nil:
 		assert.NoError(t, err)
-	} else {
+	default:
 		t.Errorf("expected ValidationErrors containing %v, got: %v", expectedErr, err)
 	}
 }
@@ -240,7 +242,53 @@ func TestValidateSlices(t *testing.T) {
 		name        string
 		in          interface{}
 		expectedErr error
-	}{}
+	}{
+		{
+			name: "slice element length mismatch",
+			in: struct {
+				Field []string `validate:"len:5"`
+			}{
+				Field: []string{"short", "longer"},
+			},
+			expectedErr: ErrorLengthMustBe,
+		},
+		{
+			name: "valid slice",
+			in: struct {
+				Field []string `validate:"len:5"`
+			}{
+				Field: []string{"exact", "exact"},
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "slice element not in list",
+			in: struct {
+				Field []int `validate:"in:1,2,3"`
+			}{
+				Field: []int{1, 4, 3},
+			},
+			expectedErr: ErrorValueMustBeOneOf,
+		},
+		{
+			name: "slice element less than min",
+			in: struct {
+				Field []int `validate:"min:10"`
+			}{
+				Field: []int{5, 15, 20},
+			},
+			expectedErr: ErrorMinValue,
+		},
+		{
+			name: "slice element greater than max",
+			in: struct {
+				Field []int `validate:"max:10"`
+			}{
+				Field: []int{5, 15, 3},
+			},
+			expectedErr: ErrorMaxValue,
+		},
+	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

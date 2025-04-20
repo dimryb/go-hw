@@ -74,35 +74,36 @@ func Validate(v interface{}) error {
 }
 
 func validateField(fieldName string, value reflect.Value, tag string, errs *ValidationErrors) {
-	fmt.Println("fieldName:", fieldName)
-	fmt.Println("tag:", tag)
 	rules := strings.Split(tag, "|")
 	for _, rule := range rules {
-		err := applyRule(value, rule)
-		if err != nil {
-			*errs = append(*errs, ValidationError{Field: fieldName, Err: err})
-		}
+		applyRule(value, rule, fieldName, errs)
 	}
 }
 
-func applyRule(value reflect.Value, rule string) error {
-	fmt.Println("rule:", rule)
-	fmt.Println("value:", value)
+func applyRule(value reflect.Value, rule string, fieldName string, errs *ValidationErrors) {
 	parts := strings.SplitN(rule, ":", 2)
 	if len(parts) != 2 {
-		return fmt.Errorf("%w: %s", ErrorInvalidRuleFormat, rule)
+		*errs = append(*errs, ValidationError{
+			Field: fieldName,
+			Err:   fmt.Errorf("%w: %s", ErrorInvalidRuleFormat, rule),
+		})
+		return
 	}
 	ruleName, ruleValue := parts[0], parts[1]
-	fmt.Println("ruleName:", ruleName)
-	fmt.Println("ruleValue:", ruleValue)
 
 	switch value.Kind() {
 	case reflect.String:
-		return validateString(value.String(), ruleName, ruleValue)
+		err := validateString(value.String(), ruleName, ruleValue)
+		if err != nil {
+			*errs = append(*errs, ValidationError{Field: fieldName, Err: err})
+		}
 	case reflect.Int:
-		return validateInt(int(value.Int()), ruleName, ruleValue)
+		err := validateInt(int(value.Int()), ruleName, ruleValue)
+		if err != nil {
+			*errs = append(*errs, ValidationError{Field: fieldName, Err: err})
+		}
 	case reflect.Slice:
-		return nil
+		validateSlice(value, ruleName, ruleValue, fieldName, errs)
 	case reflect.Invalid,
 		reflect.Bool,
 		reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
@@ -117,9 +118,15 @@ func applyRule(value reflect.Value, rule string) error {
 		reflect.Ptr,
 		reflect.Struct,
 		reflect.UnsafePointer:
-		return fmt.Errorf("%w: %s", ErrorUnsupportedType, value.Kind())
+		*errs = append(*errs, ValidationError{
+			Field: fieldName,
+			Err:   fmt.Errorf("%w: %s", ErrorUnsupportedType, value.Kind()),
+		})
 	default:
-		return fmt.Errorf("%w: %s", ErrorUnsupportedType, value.Kind())
+		*errs = append(*errs, ValidationError{
+			Field: fieldName,
+			Err:   fmt.Errorf("%w: %s", ErrorUnsupportedType, value.Kind()),
+		})
 	}
 }
 
@@ -164,20 +171,20 @@ func contains(arr []string, str string) bool {
 func validateInt(n int, ruleName, ruleValue string) error {
 	switch ruleName {
 	case "min":
-		min, err := strconv.Atoi(ruleValue)
+		minimum, err := strconv.Atoi(ruleValue)
 		if err != nil {
 			return fmt.Errorf("invalid min value: %s", ruleValue)
 		}
-		if n < min {
-			return fmt.Errorf("%w %d", ErrorMinValue, min)
+		if n < minimum {
+			return fmt.Errorf("%w %d", ErrorMinValue, minimum)
 		}
 	case "max":
-		max, err := strconv.Atoi(ruleValue)
+		maximum, err := strconv.Atoi(ruleValue)
 		if err != nil {
 			return fmt.Errorf("invalid max value: %s", ruleValue)
 		}
-		if n > max {
-			return fmt.Errorf("%w %d", ErrorMaxValue, max)
+		if n > maximum {
+			return fmt.Errorf("%w %d", ErrorMaxValue, maximum)
 		}
 	case "in":
 		values := strings.Split(ruleValue, ",")
@@ -198,4 +205,11 @@ func containsInt(arr []string, n int) bool {
 		}
 	}
 	return false
+}
+
+func validateSlice(slice reflect.Value, ruleName, ruleValue string, fieldName string, errs *ValidationErrors) {
+	for i := 0; i < slice.Len(); i++ {
+		elementFieldName := fmt.Sprintf("%s[%d]", fieldName, i)
+		applyRule(slice.Index(i), ruleName+":"+ruleValue, elementFieldName, errs)
+	}
 }
