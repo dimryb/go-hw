@@ -42,6 +42,7 @@ func TestValidate(t *testing.T) {
 	t.Run("Struct validation", TestValidateStruct)
 	t.Run("String validation", TestValidateStrings)
 	t.Run("Int validation", TestValidateInts)
+	t.Run("Float validation", TestValidateFloatTypes)
 	t.Run("Slice validation", TestValidateSlices)
 }
 
@@ -273,6 +274,130 @@ func TestValidateInts(t *testing.T) {
 				Field: 15,
 			},
 			expectedErr: nil,
+		},
+		{
+			name: "valid int8",
+			in: struct {
+				Field int8 `validate:"min:10|max:20"`
+			}{
+				Field: 15,
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "invalid int8",
+			in: struct {
+				Field int8 `validate:"min:100"`
+			}{
+				Field: 50,
+			},
+			expectedErr: ErrorMinValue,
+		},
+		{
+			name: "valid uint64",
+			in: struct {
+				Field uint64 `validate:"max:100"`
+			}{
+				Field: 50,
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "invalid uint64",
+			in: struct {
+				Field uint64 `validate:"min:100"`
+			}{
+				Field: 50,
+			},
+			expectedErr: ErrorMinValue,
+		},
+		{
+			name: "valid uint8",
+			in: struct {
+				Field uint8 `validate:"min:10|max:20"`
+			}{
+				Field: 15,
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "invalid uint8",
+			in: struct {
+				Field uint8 `validate:"min:100"`
+			}{
+				Field: 50,
+			},
+			expectedErr: ErrorMinValue,
+		},
+		{
+			name: "valid uintptr",
+			in: struct {
+				Field uintptr `validate:"in:1,2,3"`
+			}{
+				Field: 2,
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "invalid uintptr",
+			in: struct {
+				Field uintptr `validate:"min:100"`
+			}{
+				Field: 50,
+			},
+			expectedErr: ErrorMinValue,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Validate(tt.in)
+			assertValidationErrors(t, err, tt.expectedErr)
+		})
+	}
+}
+
+func TestValidateFloatTypes(t *testing.T) {
+	tests := []struct {
+		name        string
+		in          interface{}
+		expectedErr error
+	}{
+		{
+			name: "valid float32",
+			in: struct {
+				Field float32 `validate:"min:10.5|max:20.5"`
+			}{
+				Field: 15.0,
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "invalid float32",
+			in: struct {
+				Field float32 `validate:"max:10.0"`
+			}{
+				Field: 15.0,
+			},
+			expectedErr: ErrorMaxValue,
+		},
+		{
+			name: "valid float64",
+			in: struct {
+				Field float64 `validate:"in:1.0,2.0,3.0"`
+			}{
+				Field: 2.0,
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "invalid float64",
+			in: struct {
+				Field float64 `validate:"min:10.0"`
+			}{
+				Field: 5.0,
+			},
+			expectedErr: ErrorMinValue,
 		},
 	}
 

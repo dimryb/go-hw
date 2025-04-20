@@ -24,6 +24,12 @@ var (
 	ErrorUnknownRuleForInt    = errors.New("unknown rule for int")
 )
 
+type Numbers interface {
+	int | int8 | int16 | int32 | int64 |
+		uint | uint8 | uint16 | uint32 | uint64 | uintptr |
+		float32 | float64
+}
+
 type ValidationError struct {
 	Field string
 	Err   error
@@ -97,18 +103,28 @@ func applyRule(value reflect.Value, rule string, fieldName string, errs *Validat
 		if err != nil {
 			*errs = append(*errs, ValidationError{Field: fieldName, Err: err})
 		}
-	case reflect.Int:
-		err := validateInt(int(value.Int()), ruleName, ruleValue)
+	case reflect.Slice:
+		validateSlice(value, ruleName, ruleValue, fieldName, errs)
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		num := value.Int()
+		err := validateNumber(num, ruleName, ruleValue)
 		if err != nil {
 			*errs = append(*errs, ValidationError{Field: fieldName, Err: err})
 		}
-	case reflect.Slice:
-		validateSlice(value, ruleName, ruleValue, fieldName, errs)
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		num := value.Uint()
+		err := validateNumber(num, ruleName, ruleValue)
+		if err != nil {
+			*errs = append(*errs, ValidationError{Field: fieldName, Err: err})
+		}
+	case reflect.Float32, reflect.Float64:
+		num := value.Float()
+		err := validateNumber(num, ruleName, ruleValue)
+		if err != nil {
+			*errs = append(*errs, ValidationError{Field: fieldName, Err: err})
+		}
 	case reflect.Invalid,
 		reflect.Bool,
-		reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
-		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr,
-		reflect.Float32, reflect.Float64,
 		reflect.Complex64, reflect.Complex128,
 		reflect.Array,
 		reflect.Chan,
@@ -168,27 +184,27 @@ func contains(arr []string, str string) bool {
 	return false
 }
 
-func validateInt(n int, ruleName, ruleValue string) error {
+func validateNumber[T Numbers](n T, ruleName string, ruleValue string) error {
 	switch ruleName {
 	case "min":
-		minimum, err := strconv.Atoi(ruleValue)
+		minimum, err := parseNumber[T](ruleValue)
 		if err != nil {
 			return fmt.Errorf("invalid min value: %s", ruleValue)
 		}
 		if n < minimum {
-			return fmt.Errorf("%w %d", ErrorMinValue, minimum)
+			return fmt.Errorf("%w %v", ErrorMinValue, minimum)
 		}
 	case "max":
-		maximum, err := strconv.Atoi(ruleValue)
+		maximum, err := parseNumber[T](ruleValue)
 		if err != nil {
 			return fmt.Errorf("invalid max value: %s", ruleValue)
 		}
 		if n > maximum {
-			return fmt.Errorf("%w %d", ErrorMaxValue, maximum)
+			return fmt.Errorf("%w %v", ErrorMaxValue, maximum)
 		}
 	case "in":
 		values := strings.Split(ruleValue, ",")
-		if !containsInt(values, n) {
+		if !containsNumber(values, n) {
 			return fmt.Errorf("%w %s", ErrorValueMustBeOneOf, ruleValue)
 		}
 	default:
@@ -197,14 +213,31 @@ func validateInt(n int, ruleName, ruleValue string) error {
 	return nil
 }
 
-func containsInt(arr []string, n int) bool {
+func containsNumber[T Numbers](arr []string, n T) bool {
 	for _, v := range arr {
-		num, err := strconv.Atoi(v)
+		num, err := parseNumber[T](v)
 		if err == nil && num == n {
 			return true
 		}
 	}
 	return false
+}
+
+func parseNumber[T Numbers](s string) (T, error) {
+	var zero T
+	switch any(zero).(type) {
+	case int, int8, int16, int32, int64:
+		val, err := strconv.ParseInt(s, 10, 64)
+		return T(val), err
+	case uint, uint8, uint16, uint32, uint64, uintptr:
+		val, err := strconv.ParseUint(s, 10, 64)
+		return T(val), err
+	case float32, float64:
+		val, err := strconv.ParseFloat(s, 64)
+		return T(val), err
+	default:
+		return zero, fmt.Errorf("unsupported type")
+	}
 }
 
 func validateSlice(slice reflect.Value, ruleName, ruleValue string, fieldName string, errs *ValidationErrors) {
