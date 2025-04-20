@@ -25,7 +25,7 @@ type ValidationError struct {
 type ValidationErrors []ValidationError
 
 func (v ValidationErrors) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(v))
 	for _, ve := range v {
 		msgs = append(msgs, fmt.Sprintf("%s: %v", ve.Field, ve.Err))
 	}
@@ -96,6 +96,21 @@ func applyRule(value reflect.Value, rule string) error {
 		return nil
 	case reflect.Slice:
 		return nil
+	case reflect.Invalid,
+		reflect.Bool,
+		reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr,
+		reflect.Float32, reflect.Float64,
+		reflect.Complex64, reflect.Complex128,
+		reflect.Array,
+		reflect.Chan,
+		reflect.Func,
+		reflect.Interface,
+		reflect.Map,
+		reflect.Ptr,
+		reflect.Struct,
+		reflect.UnsafePointer:
+		return fmt.Errorf("%w: %s", ErrorUnsupportedType, value.Kind())
 	default:
 		return fmt.Errorf("%w: %s", ErrorUnsupportedType, value.Kind())
 	}

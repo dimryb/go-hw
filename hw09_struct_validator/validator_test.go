@@ -117,29 +117,28 @@ func TestValidate(t *testing.T) {
 			err := Validate(tt.in)
 			if tt.expectedErr == nil {
 				assert.NoError(t, err)
-			} else {
-				fmt.Println("expected:", tt.expectedErr)
-				fmt.Println("actual:", err)
-				var validationErr ValidationErrors
-				if errors.As(err, &validationErr) {
-					found := false
-					for _, ve := range validationErr {
-						fmt.Println("ve:", ve)
-						if errors.Is(ve.Err, tt.expectedErr) {
-							found = true
-							break
-						}
-					}
-					assert.True(t, found, "expected error to contain %v, got %v", tt.expectedErr, err)
-				} else {
-					assert.Fail(
-						t, "expected ValidationErrors, got other error",
-						"expected: %v, got: %v",
-						tt.expectedErr, err,
-					)
-				}
-				fmt.Println("validationErr:", validationErr)
+				return
 			}
+
+			var validationErr ValidationErrors
+			if errors.As(err, &validationErr) {
+				found := false
+				for _, ve := range validationErr {
+					fmt.Println("ve:", ve)
+					if errors.Is(ve.Err, tt.expectedErr) {
+						found = true
+						break
+					}
+				}
+				assert.True(t, found, "expected error to contain %v, got %v", tt.expectedErr, err)
+			} else {
+				assert.Fail(
+					t, "expected ValidationErrors, got other error",
+					"expected: %v, got: %v",
+					tt.expectedErr, err,
+				)
+			}
+			fmt.Println("validationErr:", validationErr)
 		})
 	}
 }
