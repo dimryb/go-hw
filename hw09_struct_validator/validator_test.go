@@ -53,7 +53,7 @@ func TestValidate(t *testing.T) {
 		{
 			name: "valid user",
 			in: User{
-				ID:     "123e4567-e89b",
+				ID:     "123e4567-e89b-12d3-a456-426614174000",
 				Age:    19,
 				Email:  "valid.user@example.com",
 				Role:   "admin",
@@ -78,6 +78,25 @@ func TestValidate(t *testing.T) {
 				Field: 42 + 2i,
 			},
 			expectedErr: ErrorUnsupportedType,
+		},
+		// string
+		{
+			name: "invalid len value",
+			in: struct {
+				Field string `validate:"len:abc"`
+			}{
+				Field: "test",
+			},
+			expectedErr: ErrorInvalidLenValue,
+		},
+		{
+			name: "length must be",
+			in: struct {
+				Field string `validate:"len:5"`
+			}{
+				Field: "long test string",
+			},
+			expectedErr: ErrorLengthMustBe,
 		},
 	}
 

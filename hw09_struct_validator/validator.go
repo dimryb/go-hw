@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 )
 
@@ -11,6 +12,8 @@ var (
 	ErrorValueMustBeStruct = errors.New("value must be a struct")
 	ErrorInvalidRuleFormat = errors.New("invalid rule format")
 	ErrorUnsupportedType   = errors.New("unsupported type")
+	ErrorInvalidLenValue   = errors.New("invalid len value")
+	ErrorLengthMustBe      = errors.New("length must be")
 )
 
 type ValidationError struct {
@@ -87,7 +90,7 @@ func applyRule(value reflect.Value, rule string) error {
 
 	switch value.Kind() {
 	case reflect.String:
-		return nil
+		return validateString(value.String(), ruleName, ruleValue)
 	case reflect.Int:
 		return nil
 	case reflect.Slice:
@@ -95,6 +98,18 @@ func applyRule(value reflect.Value, rule string) error {
 	default:
 		return fmt.Errorf("%w: %s", ErrorUnsupportedType, value.Kind())
 	}
+}
 
+func validateString(s string, ruleName, ruleValue string) error {
+	switch ruleName {
+	case "len":
+		length, err := strconv.Atoi(ruleValue)
+		if err != nil {
+			return fmt.Errorf("%w: %s", ErrorInvalidLenValue, ruleValue)
+		}
+		if len(s) != length {
+			return fmt.Errorf("%w %d", ErrorLengthMustBe, length)
+		}
+	}
 	return nil
 }
