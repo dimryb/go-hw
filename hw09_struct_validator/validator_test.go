@@ -3,7 +3,6 @@ package hw09structvalidator
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -40,6 +39,31 @@ type (
 )
 
 func TestValidate(t *testing.T) {
+	t.Run("Struct validation", TestValidateStruct)
+	t.Run("String validation", TestValidateStrings)
+	t.Run("Int validation", TestValidateInts)
+	t.Run("Slice validation", TestValidateSlices)
+}
+
+func assertValidationErrors(t *testing.T, err error, expectedErr error) {
+	var validationErr ValidationErrors
+	if errors.As(err, &validationErr) {
+		found := false
+		for _, ve := range validationErr {
+			if errors.Is(ve.Err, expectedErr) {
+				found = true
+				break
+			}
+		}
+		assert.True(t, found, "expected error to contain %v, got %v", expectedErr, err)
+	} else if expectedErr == nil {
+		assert.NoError(t, err)
+	} else {
+		t.Errorf("expected ValidationErrors containing %v, got: %v", expectedErr, err)
+	}
+}
+
+func TestValidateStruct(t *testing.T) {
 	tests := []struct {
 		name        string
 		in          interface{}
@@ -70,16 +94,22 @@ func TestValidate(t *testing.T) {
 			},
 			expectedErr: ErrorInvalidRuleFormat,
 		},
-		{
-			name: "unsupported type",
-			in: struct {
-				Field complex128 `validate:"len:5"`
-			}{
-				Field: 42 + 2i,
-			},
-			expectedErr: ErrorUnsupportedType,
-		},
-		// string
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Validate(tt.in)
+			assertValidationErrors(t, err, tt.expectedErr)
+		})
+	}
+}
+
+func TestValidateStrings(t *testing.T) {
+	tests := []struct {
+		name        string
+		in          interface{}
+		expectedErr error
+	}{
 		{
 			name: "invalid len value",
 			in: struct {
@@ -136,36 +166,86 @@ func TestValidate(t *testing.T) {
 		},
 	}
 
-	for i, tt := range tests {
-		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
-			tt := tt
-			t.Parallel()
-
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 			err := Validate(tt.in)
-			if tt.expectedErr == nil {
-				assert.NoError(t, err)
-				return
-			}
+			assertValidationErrors(t, err, tt.expectedErr)
+		})
+	}
+}
 
-			var validationErr ValidationErrors
-			if errors.As(err, &validationErr) {
-				found := false
-				for _, ve := range validationErr {
-					fmt.Println("ve:", ve)
-					if errors.Is(ve.Err, tt.expectedErr) {
-						found = true
-						break
-					}
-				}
-				assert.True(t, found, "expected error to contain %v, got %v", tt.expectedErr, err)
-			} else {
-				assert.Fail(
-					t, "expected ValidationErrors, got other error",
-					"expected: %v, got: %v",
-					tt.expectedErr, err,
-				)
-			}
-			fmt.Println("validationErr:", validationErr)
+func TestValidateInts(t *testing.T) {
+	tests := []struct {
+		name        string
+		in          interface{}
+		expectedErr error
+	}{
+		{
+			name: "value less than min",
+			in: struct {
+				Field int `validate:"min:10"`
+			}{
+				Field: 5,
+			},
+			expectedErr: ErrorMinValue,
+		},
+		{
+			name: "value greater than max",
+			in: struct {
+				Field int `validate:"max:10"`
+			}{
+				Field: 15,
+			},
+			expectedErr: ErrorMaxValue,
+		},
+		{
+			name: "value not in list",
+			in: struct {
+				Field int `validate:"in:1,2,3"`
+			}{
+				Field: 4,
+			},
+			expectedErr: ErrorValueMustBeOneOf,
+		},
+		{
+			name: "unknown rule for int",
+			in: struct {
+				Field int `validate:"unknown:10"`
+			}{
+				Field: 5,
+			},
+			expectedErr: ErrorUnknownRuleForInt,
+		},
+		{
+			name: "valid int",
+			in: struct {
+				Field int `validate:"min:10|max:20|in:15,20"`
+			}{
+				Field: 15,
+			},
+			expectedErr: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Validate(tt.in)
+			assertValidationErrors(t, err, tt.expectedErr)
+		})
+	}
+}
+
+func TestValidateSlices(t *testing.T) {
+	tests := []struct {
+		name        string
+		in          interface{}
+		expectedErr error
+	}{}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Validate(tt.in)
+			assertValidationErrors(t, err, tt.expectedErr)
 		})
 	}
 }

@@ -19,6 +19,9 @@ var (
 	ErrorValueMustBeOneOf     = errors.New("value must be one of")
 	ErrorInvalidRegexp        = errors.New("invalid regexp")
 	ErrorDoesNotMatchRegexp   = errors.New("does not match regexp")
+	ErrorMinValue             = errors.New("value must be >=")
+	ErrorMaxValue             = errors.New("value must be <=")
+	ErrorUnknownRuleForInt    = errors.New("unknown rule for int")
 )
 
 type ValidationError struct {
@@ -97,7 +100,7 @@ func applyRule(value reflect.Value, rule string) error {
 	case reflect.String:
 		return validateString(value.String(), ruleName, ruleValue)
 	case reflect.Int:
-		return nil
+		return validateInt(int(value.Int()), ruleName, ruleValue)
 	case reflect.Slice:
 		return nil
 	case reflect.Invalid,
@@ -152,6 +155,45 @@ func validateString(s string, ruleName, ruleValue string) error {
 func contains(arr []string, str string) bool {
 	for _, v := range arr {
 		if v == str {
+			return true
+		}
+	}
+	return false
+}
+
+func validateInt(n int, ruleName, ruleValue string) error {
+	switch ruleName {
+	case "min":
+		min, err := strconv.Atoi(ruleValue)
+		if err != nil {
+			return fmt.Errorf("invalid min value: %s", ruleValue)
+		}
+		if n < min {
+			return fmt.Errorf("%w %d", ErrorMinValue, min)
+		}
+	case "max":
+		max, err := strconv.Atoi(ruleValue)
+		if err != nil {
+			return fmt.Errorf("invalid max value: %s", ruleValue)
+		}
+		if n > max {
+			return fmt.Errorf("%w %d", ErrorMaxValue, max)
+		}
+	case "in":
+		values := strings.Split(ruleValue, ",")
+		if !containsInt(values, n) {
+			return fmt.Errorf("%w %s", ErrorValueMustBeOneOf, ruleValue)
+		}
+	default:
+		return fmt.Errorf("%w: %s", ErrorUnknownRuleForInt, ruleName)
+	}
+	return nil
+}
+
+func containsInt(arr []string, n int) bool {
+	for _, v := range arr {
+		num, err := strconv.Atoi(v)
+		if err == nil && num == n {
 			return true
 		}
 	}
