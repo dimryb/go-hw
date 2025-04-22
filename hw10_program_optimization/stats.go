@@ -30,21 +30,21 @@ func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 type users []User
 
 func getUsers(r io.Reader) (result users, err error) {
-	content, err := io.ReadAll(r)
-	if err != nil {
-		return
-	}
+	decoder := json.NewDecoder(r)
+	result = make(users, 0, 100_000)
 
-	lines := strings.Split(string(content), "\n")
-	result = make(users, 0, len(lines))
-	for _, line := range lines {
+	for {
 		var user User
-		if err = json.Unmarshal([]byte(line), &user); err != nil {
-			return
+		if err = decoder.Decode(&user); err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, fmt.Errorf("failed to decode JSON: %w", err)
 		}
 		result = append(result, user)
 	}
-	return
+
+	return result, nil
 }
 
 func countDomains(u users, domain string) (DomainStat, error) {
