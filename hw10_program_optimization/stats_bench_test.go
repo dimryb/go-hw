@@ -22,7 +22,10 @@ func BenchmarkGetDomainStatLargeData(b *testing.B) {
 	domain := "biz"
 
 	for i := 0; i < b.N; i++ {
-		_, err := GetDomainStat(data, domain)
+		data, err := r.File[0].Open()
+		require.NoError(b, err)
+
+		_, err = GetDomainStat(data, domain)
 		require.NoError(b, err)
 	}
 }
