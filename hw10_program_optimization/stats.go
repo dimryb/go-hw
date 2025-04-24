@@ -6,7 +6,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/json-iterator/go"
+	"github.com/json-iterator/go" //nolint:depguard
 )
 
 var json = jsoniter.ConfigFastest
