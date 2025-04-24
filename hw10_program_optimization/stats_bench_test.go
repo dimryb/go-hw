@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// go test -bench=BenchmarkGetDomainStatLargeData -benchmem -count=1 -v -tags bench -run=^$ > result.txt .
+// go test -bench=BenchmarkGetDomainStatLargeData -benchmem -count=10 -v -tags bench -run=^$ > result.txt .
 func BenchmarkGetDomainStatLargeData(b *testing.B) {
 	r, err := zip.OpenReader("testdata/users.dat.zip")
 	require.NoError(b, err)
