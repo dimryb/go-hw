@@ -1,9 +1,11 @@
+//go:build !bench
 // +build !bench
 
 package hw10programoptimization
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -33,6 +35,43 @@ func TestGetDomainStat(t *testing.T) {
 
 	t.Run("find 'unknown'", func(t *testing.T) {
 		result, err := GetDomainStat(bytes.NewBufferString(data), "unknown")
+		require.NoError(t, err)
+		require.Equal(t, DomainStat{}, result)
+	})
+
+	t.Run("empty input", func(t *testing.T) {
+		result, err := GetDomainStat(bytes.NewBufferString(""), "com")
+		require.NoError(t, err)
+		require.Equal(t, DomainStat{}, result)
+	})
+
+	t.Run("invalid JSON", func(t *testing.T) {
+		invalidData := `{"Id":1,"Name":"Invalid","Username":"invalid","Email":"invalid@invalid.com","Phone":"123-45-67","Password":"invalid","Address":"Invalid Street 1"}`
+		invalidData += "\n" + `{"Id":2,"Name":"Invalid","Username":"invalid","Email":"invalid@invalid.com","Phone":"123-45-67","Password":"invalid","Address":"Invalid Street 1"`
+		_, err := GetDomainStat(bytes.NewBufferString(invalidData), "com")
+		require.Error(t, err)
+	})
+
+	t.Run("case-insensitive domain matching", func(t *testing.T) {
+		mixedCaseData := `{"Id":1,"Name":"Test User","Username":"testuser","Email":"test@MiXeDcAsE.CoM","Phone":"123-45-67","Password":"test","Address":"Test Street 1"}`
+		result, err := GetDomainStat(bytes.NewBufferString(mixedCaseData), "com")
+		require.NoError(t, err)
+		require.Equal(t, DomainStat{"mixedcase.com": 1}, result)
+	})
+
+	t.Run("large input", func(t *testing.T) {
+		largeData := strings.Repeat(
+			`{"Id":1,"Name":"Test User","Username":"testuser","Email":"test@largeinput.com","Phone":"123-45-67","Password":"test","Address":"Test Street 1"}`+"\n",
+			100000,
+		)
+		result, err := GetDomainStat(bytes.NewBufferString(largeData), "com")
+		require.NoError(t, err)
+		require.Equal(t, DomainStat{"largeinput.com": 100000}, result)
+	})
+
+	t.Run("empty email field", func(t *testing.T) {
+		emptyEmailData := `{"Id":1,"Name":"Test User","Username":"testuser","Email":"","Phone":"123-45-67","Password":"test","Address":"Test Street 1"}`
+		result, err := GetDomainStat(bytes.NewBufferString(emptyEmailData), "com")
 		require.NoError(t, err)
 		require.Equal(t, DomainStat{}, result)
 	})
