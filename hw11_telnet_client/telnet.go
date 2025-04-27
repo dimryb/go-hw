@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"io"
+	"net"
 	"time"
 )
 
@@ -17,6 +19,7 @@ type telnetClient struct {
 	timeout time.Duration
 	in      io.ReadCloser
 	out     io.Writer
+	conn    net.Conn
 }
 
 func NewTelnetClient(address string, timeout time.Duration, in io.ReadCloser, out io.Writer) TelnetClient {
@@ -32,6 +35,17 @@ func NewTelnetClient(address string, timeout time.Duration, in io.ReadCloser, ou
 // P.S. Author's solution takes no more than 50 lines.
 
 func (t *telnetClient) Connect() error {
+	ctx, cancel := context.WithTimeout(context.Background(), t.timeout)
+	defer cancel()
+
+	dialer := &net.Dialer{}
+
+	conn, err := dialer.DialContext(ctx, "tcp", t.address)
+	if err != nil {
+		return err
+	}
+
+	t.conn = conn
 	return nil
 }
 
