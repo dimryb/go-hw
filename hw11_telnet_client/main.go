@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -34,11 +35,11 @@ func runTelnetClient(address string, timeout time.Duration, in io.ReadCloser, ou
 
 	select {
 	case err := <-sendErrCh:
-		if err != nil && err != io.EOF {
+		if err != nil && errors.Is(err, io.EOF) {
 			return fmt.Errorf("send error: %w", err)
 		}
 	case err := <-receiveErrCh:
-		if err != nil && err != io.EOF {
+		if err != nil && errors.Is(err, io.EOF) {
 			return fmt.Errorf("receive error: %w", err)
 		}
 	}
