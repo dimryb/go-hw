@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net"
 	"time"
@@ -31,9 +32,6 @@ func NewTelnetClient(address string, timeout time.Duration, in io.ReadCloser, ou
 	}
 }
 
-// Place your code here.
-// P.S. Author's solution takes no more than 50 lines.
-
 func (t *telnetClient) Connect() error {
 	ctx, cancel := context.WithTimeout(context.Background(), t.timeout)
 	defer cancel()
@@ -50,13 +48,26 @@ func (t *telnetClient) Connect() error {
 }
 
 func (t *telnetClient) Send() error {
-	return nil
+	if t.conn == nil {
+		return fmt.Errorf("connection is not established")
+	}
+	_, err := io.Copy(t.conn, t.in)
+	return err
 }
 
 func (t *telnetClient) Receive() error {
-	return nil
+	if t.conn == nil {
+		return fmt.Errorf("connection is not established")
+	}
+	_, err := io.Copy(t.out, t.conn)
+	return err
 }
 
 func (t *telnetClient) Close() error {
+	if t.conn != nil {
+		if err := t.conn.Close(); err != nil {
+			return err
+		}
+	}
 	return t.in.Close()
 }
