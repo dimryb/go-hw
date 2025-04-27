@@ -52,6 +52,7 @@ func (t *telnetClient) Send() error {
 		return fmt.Errorf("connection is not established")
 	}
 	_, err := io.Copy(t.conn, t.in)
+	time.Sleep(100 * time.Millisecond)
 	return err
 }
 

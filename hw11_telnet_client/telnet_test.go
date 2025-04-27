@@ -2,8 +2,11 @@ package main
 
 import (
 	"bytes"
+	"context"
+	"errors"
 	"io"
 	"net"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -62,4 +65,72 @@ func TestTelnetClient(t *testing.T) {
 
 		wg.Wait()
 	})
+}
+
+func TestRunTelnetClient(t *testing.T) {
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, listener.Close())
+	}()
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	go func() {
+		defer wg.Done()
+
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			conn, err := listener.Accept()
+			defer func() {
+				require.NoError(t, conn.Close())
+			}()
+			if err != nil {
+				if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+					return
+				}
+				t.Errorf("Failed to accept connection: %v", err)
+				return
+			}
+
+			buf := make([]byte, 1024)
+			n, err := conn.Read(buf)
+			if err != nil && ctx.Err() == nil {
+				t.Errorf("Failed to read from client: %v", err)
+				return
+			}
+			clientData := string(buf[:n])
+			require.Equal(t, "Hello\nFrom\nNC\n", clientData)
+
+			_, err = conn.Write([]byte("I\nam\nTELNET client\n"))
+			if err != nil && ctx.Err() == nil {
+				t.Errorf("Failed to write to client: %v", err)
+				return
+			}
+		}
+	}()
+
+	serverAddr := listener.Addr().String()
+
+	input := strings.NewReader("Hello\nFrom\nNC\n")
+	output := &bytes.Buffer{}
+
+	err = runTelnetClient(serverAddr, 5*time.Second, io.NopCloser(input), output)
+	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+		t.Errorf("Client timed out")
+	}
+	require.NoError(t, err)
+
+	expectedOutput := "I\nam\nTELNET client\n"
+	require.Equal(t, expectedOutput, output.String())
+
+	time.Sleep(100 * time.Millisecond)
+
+	wg.Wait()
 }
