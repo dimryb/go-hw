@@ -77,43 +77,23 @@ func TestRunTelnetClient(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
 	go func() {
 		defer wg.Done()
 
-		select {
-		case <-ctx.Done():
-			return
-		default:
-			conn, err := listener.Accept()
-			defer func() {
-				require.NoError(t, conn.Close())
-			}()
-			if err != nil {
-				if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-					return
-				}
-				t.Errorf("Failed to accept connection: %v", err)
-				return
-			}
+		conn, err := listener.Accept()
+		defer func() {
+			require.NoError(t, conn.Close())
+		}()
+		require.NoError(t, err)
 
-			buf := make([]byte, 1024)
-			n, err := conn.Read(buf)
-			if err != nil && ctx.Err() == nil {
-				t.Errorf("Failed to read from client: %v", err)
-				return
-			}
-			clientData := string(buf[:n])
-			require.Equal(t, "Hello\nFrom\nNC\n", clientData)
+		buf := make([]byte, 1024)
+		n, err := conn.Read(buf)
+		require.NoError(t, err)
+		clientData := string(buf[:n])
+		require.Equal(t, "Hello\nFrom\nNC\n", clientData)
 
-			_, err = conn.Write([]byte("I\nam\nTELNET client\n"))
-			if err != nil && ctx.Err() == nil {
-				t.Errorf("Failed to write to client: %v", err)
-				return
-			}
-		}
+		_, err = conn.Write([]byte("I\nam\nTELNET client\n"))
+		require.NoError(t, err)
 	}()
 
 	serverAddr := listener.Addr().String()
@@ -121,16 +101,27 @@ func TestRunTelnetClient(t *testing.T) {
 	input := strings.NewReader("Hello\nFrom\nNC\n")
 	output := &bytes.Buffer{}
 
-	err = runTelnetClient(serverAddr, 5*time.Second, io.NopCloser(input), output)
-	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-		t.Errorf("Client timed out")
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		err := runTelnetClient(ctx, serverAddr, 5*time.Second, io.NopCloser(input), output)
+		if err != nil && !errors.Is(err, context.DeadlineExceeded) {
+			t.Errorf("Client error: %v", err)
+		}
+	}()
+
+	select {
+	case <-done:
+	case <-ctx.Done():
 	}
-	require.NoError(t, err)
 
 	expectedOutput := "I\nam\nTELNET client\n"
 	require.Equal(t, expectedOutput, output.String())
 
-	time.Sleep(100 * time.Millisecond)
-
 	wg.Wait()
 }
+
+// TODO: Добавить тест с остановкой сервера при работе клиента

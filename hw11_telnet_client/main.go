@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -11,7 +12,11 @@ import (
 	"time"
 )
 
-func runTelnetClient(address string, timeout time.Duration, in io.ReadCloser, out io.Writer) error {
+func runTelnetClient(
+	ctx context.Context,
+	address string, timeout time.Duration,
+	in io.ReadCloser, out io.Writer,
+) error {
 	client := NewTelnetClient(address, timeout, in, out)
 
 	if err := client.Connect(); err != nil {
@@ -23,27 +28,32 @@ func runTelnetClient(address string, timeout time.Duration, in io.ReadCloser, ou
 		}
 	}()
 
-	sendErrCh := make(chan error, 1)
+	sendErrCh := make(chan error)
 	go func() {
 		sendErrCh <- client.Send()
+		close(sendErrCh)
 	}()
 
-	receiveErrCh := make(chan error, 1)
+	receiveErrCh := make(chan error)
 	go func() {
 		receiveErrCh <- client.Receive()
+		close(receiveErrCh)
 	}()
 
-	select {
-	case err := <-sendErrCh:
-		if err != nil && errors.Is(err, io.EOF) {
-			return fmt.Errorf("send error: %w", err)
-		}
-	case err := <-receiveErrCh:
-		if err != nil && errors.Is(err, io.EOF) {
-			return fmt.Errorf("receive error: %w", err)
+	for {
+		select {
+		case err := <-sendErrCh:
+			if err != nil && !errors.Is(err, io.EOF) {
+				return fmt.Errorf("send error: %w", err)
+			}
+		case err := <-receiveErrCh:
+			if err != nil && !errors.Is(err, io.EOF) {
+				return fmt.Errorf("receive error: %w", err)
+			}
+		case <-ctx.Done():
+			return ctx.Err()
 		}
 	}
-	return nil
 }
 
 func main() {
@@ -60,8 +70,10 @@ func main() {
 	port := args[1]
 	address := net.JoinHostPort(host, port)
 
-	if err := runTelnetClient(address, *timeout, os.Stdin, os.Stdout); err != nil {
-		log.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
+	ctx, cancel := context.WithCancel(context.Background())
+	err := runTelnetClient(ctx, address, *timeout, os.Stdin, os.Stdout)
+	log.Printf("Error: %v\n", err)
+
+	cancel()
+	os.Exit(1)
 }
