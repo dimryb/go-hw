@@ -8,6 +8,11 @@ import (
 	"time"
 )
 
+var (
+	ErrorReceiveEnd = fmt.Errorf("receive end")
+	ErrorSendEnd    = fmt.Errorf("send end")
+)
+
 type TelnetClient interface {
 	Connect() error
 	io.Closer
@@ -52,6 +57,9 @@ func (t *telnetClient) Send() error {
 		return fmt.Errorf("connection is not established")
 	}
 	_, err := io.Copy(t.conn, t.in)
+	if err != nil {
+		return fmt.Errorf("%w, %w", ErrorSendEnd, err)
+	}
 	return err
 }
 
@@ -60,7 +68,10 @@ func (t *telnetClient) Receive() error {
 		return fmt.Errorf("connection is not established")
 	}
 	_, err := io.Copy(t.out, t.conn)
-	return err
+	if err != nil {
+		return fmt.Errorf("%w, %w", ErrorReceiveEnd, err)
+	}
+	return nil
 }
 
 func (t *telnetClient) Close() error {
@@ -70,5 +81,5 @@ func (t *telnetClient) Close() error {
 			return fmt.Errorf("failed to close connection: %w", err)
 		}
 	}
-	return t.in.Close()
+	return nil
 }

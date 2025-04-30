@@ -14,8 +14,10 @@ import (
 
 func runTelnetClient(
 	ctx context.Context,
-	address string, timeout time.Duration,
-	in io.ReadCloser, out io.Writer,
+	address string,
+	timeout time.Duration,
+	in io.ReadCloser,
+	out io.Writer,
 ) error {
 	client := NewTelnetClient(address, timeout, in, out)
 
@@ -29,27 +31,24 @@ func runTelnetClient(
 	}()
 
 	sendErrCh := make(chan error)
+	receiveErrCh := make(chan error)
+
 	go func() {
+		defer close(sendErrCh)
 		sendErrCh <- client.Send()
-		close(sendErrCh)
 	}()
 
-	receiveErrCh := make(chan error)
 	go func() {
+		defer close(receiveErrCh)
 		receiveErrCh <- client.Receive()
-		close(receiveErrCh)
 	}()
 
 	for {
 		select {
 		case err := <-sendErrCh:
-			if err != nil && !errors.Is(err, io.EOF) {
-				return fmt.Errorf("send error: %w", err)
-			}
+			return err
 		case err := <-receiveErrCh:
-			if err != nil && !errors.Is(err, io.EOF) {
-				return fmt.Errorf("receive error: %w", err)
-			}
+			return err
 		case <-ctx.Done():
 			return ctx.Err()
 		}
@@ -72,8 +71,14 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	err := runTelnetClient(ctx, address, *timeout, os.Stdin, os.Stdout)
-	log.Printf("Error: %v\n", err)
-
+	if err != nil {
+		if errors.Is(err, ErrorReceiveEnd) {
+			log.Print("Connection was canceled from server")
+		} else {
+			log.Print("Failed: ", err.Error())
+		}
+	} else {
+		log.Print("Connection was canceled.")
+	}
 	cancel()
-	os.Exit(1)
 }
