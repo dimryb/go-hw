@@ -40,7 +40,7 @@ func (t *telnetClient) Connect() error {
 
 	conn, err := dialer.DialContext(ctx, "tcp", t.address)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to connect to %s: %w", t.address, err)
 	}
 
 	t.conn = conn
@@ -65,8 +65,9 @@ func (t *telnetClient) Receive() error {
 
 func (t *telnetClient) Close() error {
 	if t.conn != nil {
-		if err := t.conn.Close(); err != nil {
-			return err
+		err := t.conn.Close()
+		if err != nil {
+			return fmt.Errorf("failed to close connection: %w", err)
 		}
 	}
 	return t.in.Close()
