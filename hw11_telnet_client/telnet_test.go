@@ -6,7 +6,6 @@ import (
 	"errors"
 	"io"
 	"net"
-	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -98,7 +97,7 @@ func TestRunTelnetClient(t *testing.T) {
 
 	serverAddr := listener.Addr().String()
 
-	input := strings.NewReader("Hello\nFrom\nNC\n")
+	input := &bytes.Buffer{}
 	output := &bytes.Buffer{}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
@@ -113,9 +112,12 @@ func TestRunTelnetClient(t *testing.T) {
 		}
 	}()
 
+	input.WriteString("Hello\nFrom\nNC\n")
+
 	select {
 	case <-done:
 	case <-ctx.Done():
+		t.Fatal("Test timed out")
 	}
 
 	expectedOutput := "I\nam\nTELNET client\n"
@@ -123,5 +125,3 @@ func TestRunTelnetClient(t *testing.T) {
 
 	wg.Wait()
 }
-
-// TODO: Добавить тест с остановкой сервера при работе клиента
