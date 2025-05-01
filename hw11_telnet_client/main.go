@@ -6,9 +6,10 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -28,7 +29,7 @@ func runTelnetClient(
 	defer func() {
 		time.Sleep(clientCloseDelay)
 		if err := client.Close(); err != nil {
-			log.Fatalf("failed to close client: %v", err)
+			fmt.Fprintf(os.Stderr, "failed to close client: %v\n", err)
 		}
 	}()
 
@@ -63,7 +64,7 @@ func main() {
 
 	args := flag.Args()
 	if len(args) < 2 {
-		log.Println("Usage: go-telnet [--timeout=TIMEOUT] host port")
+		fmt.Fprintln(os.Stderr, "Usage: go-telnet [--timeout=TIMEOUT] host port")
 		os.Exit(1)
 	}
 
@@ -72,15 +73,26 @@ func main() {
 	address := net.JoinHostPort(host, port)
 
 	ctx, cancel := context.WithCancel(context.Background())
+
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+	defer signal.Stop(sigCh)
+
+	go func() {
+		sig := <-sigCh
+		fmt.Fprintf(os.Stderr, "Received signal: %v. Shutting down...\n", sig)
+		cancel()
+	}()
+
 	err := runTelnetClient(ctx, address, *timeout, 0, os.Stdin, os.Stdout)
 	if err != nil {
 		if errors.Is(err, ErrorReceiveEnd) {
-			log.Print("Connection was canceled from server")
+			fmt.Fprintln(os.Stderr, "Connection was closed by peer.")
 		} else {
-			log.Print("Failed: ", err.Error())
+			fmt.Fprintln(os.Stderr, "Failed: ", err.Error())
 		}
 	} else {
-		log.Print("Connection was canceled.")
+		fmt.Fprintln(os.Stderr, "Connection was canceled.")
 	}
 	cancel()
 }
