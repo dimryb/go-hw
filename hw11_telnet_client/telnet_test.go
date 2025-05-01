@@ -77,6 +77,11 @@ func TestRunTelnetClient(t *testing.T) {
 			inputData:      "Hello\nFrom\nNC\n",
 			expectedOutput: "I\nam\nTELNET client\n",
 		},
+		{
+			name:           "Without input data (EOF immediately)",
+			inputData:      "",
+			expectedOutput: "",
+		},
 	}
 
 	for _, tt := range tests {
@@ -101,7 +106,9 @@ func TestRunTelnetClient(t *testing.T) {
 
 				buf := make([]byte, 1024)
 				n, err := conn.Read(buf)
-				require.NoError(t, err)
+				if err != nil && !errors.Is(err, io.EOF) {
+					require.NoError(t, err)
+				}
 				clientData := string(buf[:n])
 				require.Equal(t, tt.inputData, clientData)
 
