@@ -111,13 +111,13 @@ func TestRunTelnetClient(t *testing.T) {
 
 			serverAddr := listener.Addr().String()
 
-			input := &bytes.Buffer{}
-			output := &bytes.Buffer{}
+			input := &SafeBuffer{}
+			output := &SafeBuffer{}
 
 			ctx, cancel := context.WithTimeout(context.Background(), 1000*time.Millisecond)
 			defer cancel()
 
-			input.WriteString(tt.inputData)
+			input.Write([]byte(tt.inputData))
 
 			wg.Add(1)
 			go func() {
@@ -138,4 +138,27 @@ func TestRunTelnetClient(t *testing.T) {
 			}
 		})
 	}
+}
+
+type SafeBuffer struct {
+	buf bytes.Buffer
+	mu  sync.Mutex
+}
+
+func (sb *SafeBuffer) Write(p []byte) (n int, err error) {
+	sb.mu.Lock()
+	defer sb.mu.Unlock()
+	return sb.buf.Write(p)
+}
+
+func (sb *SafeBuffer) Read(p []byte) (n int, err error) {
+	sb.mu.Lock()
+	defer sb.mu.Unlock()
+	return sb.buf.Read(p)
+}
+
+func (sb *SafeBuffer) String() string {
+	sb.mu.Lock()
+	defer sb.mu.Unlock()
+	return sb.buf.String()
 }
