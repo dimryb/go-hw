@@ -16,6 +16,7 @@ func runTelnetClient(
 	ctx context.Context,
 	address string,
 	timeout time.Duration,
+	clientCloseDelay time.Duration,
 	in io.ReadCloser,
 	out io.Writer,
 ) error {
@@ -25,6 +26,7 @@ func runTelnetClient(
 		return fmt.Errorf("connection failed: %w", err)
 	}
 	defer func() {
+		time.Sleep(clientCloseDelay)
 		if err := client.Close(); err != nil {
 			log.Fatalf("failed to close client: %v", err)
 		}
@@ -50,7 +52,7 @@ func runTelnetClient(
 		case err := <-receiveErrCh:
 			return err
 		case <-ctx.Done():
-			return ctx.Err()
+			return nil
 		}
 	}
 }
@@ -70,7 +72,7 @@ func main() {
 	address := net.JoinHostPort(host, port)
 
 	ctx, cancel := context.WithCancel(context.Background())
-	err := runTelnetClient(ctx, address, *timeout, os.Stdin, os.Stdout)
+	err := runTelnetClient(ctx, address, *timeout, 0, os.Stdin, os.Stdout)
 	if err != nil {
 		if errors.Is(err, ErrorReceiveEnd) {
 			log.Print("Connection was canceled from server")
