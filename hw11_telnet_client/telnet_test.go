@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"context"
+	"errors"
 	"io"
 	"net"
 	"sync"
@@ -62,4 +64,108 @@ func TestTelnetClient(t *testing.T) {
 
 		wg.Wait()
 	})
+}
+
+func TestRunTelnetClient(t *testing.T) {
+	tests := []struct {
+		name           string
+		inputData      string
+		expectedOutput string
+	}{
+		{
+			name:           "With input data",
+			inputData:      "Hello\nFrom\nNC\n",
+			expectedOutput: "I\nam\nTELNET client\n",
+		},
+		{
+			name:           "Without input data (EOF immediately)",
+			inputData:      "",
+			expectedOutput: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			listener, err := net.Listen("tcp", "127.0.0.1:0")
+			require.NoError(t, err)
+			defer func() {
+				require.NoError(t, listener.Close())
+			}()
+
+			var wg sync.WaitGroup
+			wg.Add(1)
+
+			go func() {
+				defer wg.Done()
+
+				conn, err := listener.Accept()
+				defer func() {
+					require.NoError(t, conn.Close())
+				}()
+				require.NoError(t, err)
+
+				buf := make([]byte, 1024)
+				n, err := conn.Read(buf)
+				if err != nil && !errors.Is(err, io.EOF) {
+					require.NoError(t, err)
+				}
+				clientData := string(buf[:n])
+				require.Equal(t, tt.inputData, clientData)
+
+				_, err = conn.Write([]byte("I\nam\nTELNET client\n"))
+				require.NoError(t, err)
+			}()
+
+			serverAddr := listener.Addr().String()
+
+			input := &SafeBuffer{}
+			output := &SafeBuffer{}
+
+			ctx, cancel := context.WithTimeout(context.Background(), 1000*time.Millisecond)
+			defer cancel()
+
+			input.Write([]byte(tt.inputData))
+
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				err := runTelnetClient(ctx, serverAddr, 5*time.Second, 100*time.Millisecond, io.NopCloser(input), output)
+				if err != nil && !errors.Is(err, context.DeadlineExceeded) {
+					t.Errorf("Client error: %v", err)
+				}
+			}()
+
+			wg.Wait()
+
+			select {
+			case <-ctx.Done():
+				t.Fatal("Test timed out")
+			default:
+				require.Equal(t, tt.expectedOutput, output.String())
+			}
+		})
+	}
+}
+
+type SafeBuffer struct {
+	buf bytes.Buffer
+	mu  sync.Mutex
+}
+
+func (sb *SafeBuffer) Write(p []byte) (n int, err error) {
+	sb.mu.Lock()
+	defer sb.mu.Unlock()
+	return sb.buf.Write(p)
+}
+
+func (sb *SafeBuffer) Read(p []byte) (n int, err error) {
+	sb.mu.Lock()
+	defer sb.mu.Unlock()
+	return sb.buf.Read(p)
+}
+
+func (sb *SafeBuffer) String() string {
+	sb.mu.Lock()
+	defer sb.mu.Unlock()
+	return sb.buf.String()
 }
