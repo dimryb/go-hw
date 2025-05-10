@@ -2,11 +2,14 @@ package logger
 
 import "fmt"
 
-type Logger struct { // TODO
+type Logger struct {
+	level string
 }
 
 func New(level string) *Logger {
-	return &Logger{}
+	return &Logger{
+		level: level,
+	}
 }
 
 func (l Logger) Info(msg string) {
