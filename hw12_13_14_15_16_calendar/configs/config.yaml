@@ -1,5 +1,5 @@
-[logger]
-level = "INFO"
+http:
+  port: 8080
 
-# TODO
-# ...
+log:
+  level: 'debug'
