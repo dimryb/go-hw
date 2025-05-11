@@ -90,11 +90,29 @@ func (s *Storage) List() ([]storage.Event, error) {
 }
 
 func (s *Storage) ListByUser(userID string) ([]storage.Event, error) {
-	panic("not implemented")
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	result := make([]storage.Event, 0)
+	for _, event := range s.events {
+		if event.UserID == userID {
+			result = append(result, event)
+		}
+	}
+	return result, nil
 }
 
 func (s *Storage) ListByUserInRange(userID string, from, to time.Time) ([]storage.Event, error) {
-	panic("not implemented")
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	result := make([]storage.Event, 0)
+	for _, event := range s.events {
+		if event.UserID == userID && !event.EndTime.Before(from) && !event.StartTime.After(to) {
+			result = append(result, event)
+		}
+	}
+	return result, nil
 }
 
 func isOverlapping(a, b storage.Event) bool {
