@@ -48,15 +48,45 @@ func (s *Storage) GetByID(id string) (storage.Event, error) {
 }
 
 func (s *Storage) Update(event storage.Event) error {
-	panic("not implemented")
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	_, exist := s.events[event.ID]
+	if !exist {
+		return storage.ErrEventNotFound
+	}
+
+	for id, e := range s.events {
+		if id != event.ID && e.UserID == event.UserID && isOverlapping(e, event) {
+			return storage.ErrConflictOverlap
+		}
+	}
+
+	s.events[event.ID] = event
+	return nil
 }
 
 func (s *Storage) Delete(id string) error {
-	panic("not implemented")
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if _, exists := s.events[id]; !exists {
+		return storage.ErrEventNotFound
+	}
+
+	delete(s.events, id)
+	return nil
 }
 
 func (s *Storage) List() ([]storage.Event, error) {
-	panic("not implemented")
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	result := make([]storage.Event, 0, len(s.events))
+	for _, v := range s.events {
+		result = append(result, v)
+	}
+	return result, nil
 }
 
 func (s *Storage) ListByUser(userID string) ([]storage.Event, error) {
@@ -68,5 +98,5 @@ func (s *Storage) ListByUserInRange(userID string, from, to time.Time) ([]storag
 }
 
 func isOverlapping(a, b storage.Event) bool {
-	return a.StartTime.Before(b.EndTime) && b.StartTime.Before(a.EndTime)
+	return !a.EndTime.Before(b.StartTime) && !b.EndTime.Before(a.StartTime)
 }
