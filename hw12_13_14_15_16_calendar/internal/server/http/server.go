@@ -9,7 +9,11 @@ type Server struct {
 	app    Application
 }
 
-type Logger interface { // TODO
+type Logger interface {
+	Debug(string)
+	Info(string)
+	Warn(string)
+	Error(string)
 }
 
 type Application interface { // TODO

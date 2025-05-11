@@ -19,7 +19,11 @@ type App struct {
 	storage Storage
 }
 
-type Logger interface { // TODO
+type Logger interface {
+	Debug(string)
+	Info(string)
+	Warn(string)
+	Error(string)
 }
 
 type Storage interface { // TODO
@@ -52,14 +56,14 @@ func Run(configPath string) {
 		defer cancel()
 
 		if err := server.Stop(ctx); err != nil {
-			logg.Error("failed to stop http server: " + err.Error())
+			calendar.logger.Error("failed to stop http server: " + err.Error())
 		}
 	}()
 
-	logg.Info("calendar is running...")
+	calendar.logger.Info("calendar is running...")
 
 	if err := server.Start(ctx); err != nil {
-		logg.Error("failed to start http server: " + err.Error())
+		calendar.logger.Error("failed to start http server: " + err.Error())
 		cancel()
 		os.Exit(1) //nolint:gocritic
 	}
