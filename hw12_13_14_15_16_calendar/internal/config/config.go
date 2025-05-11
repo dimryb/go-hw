@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/ilyakaznacheev/cleanenv"
+	"github.com/ilyakaznacheev/cleanenv" //nolint: depguard
 )
 
 type (

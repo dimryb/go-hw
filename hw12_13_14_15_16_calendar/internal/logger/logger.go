@@ -3,7 +3,7 @@ package logger
 import (
 	"os"
 
-	"github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus" //nolint: depguard
 )
 
 type Logger struct {
@@ -29,18 +29,18 @@ func New(level string) *Logger {
 	}
 }
 
-func (_ Logger) Debug(msg string) {
+func (Logger) Debug(msg string) {
 	logrus.Debug(msg)
 }
 
-func (_ Logger) Info(msg string) {
+func (Logger) Info(msg string) {
 	logrus.Info(msg)
 }
 
-func (_ Logger) Warn(msg string) {
+func (Logger) Warn(msg string) {
 	logrus.Warn(msg)
 }
 
-func (_ Logger) Error(msg string) {
+func (Logger) Error(msg string) {
 	logrus.Error(msg)
 }
