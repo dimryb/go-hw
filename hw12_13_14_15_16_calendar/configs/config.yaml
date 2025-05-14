@@ -3,3 +3,8 @@ http:
 
 log:
   level: 'debug'
+
+database:
+  driver: postgres
+  dsn: "postgres://calendar_user:calendar_password@localhost:5432/calendar?sslmode=disable"
+  migration: "./migrations"

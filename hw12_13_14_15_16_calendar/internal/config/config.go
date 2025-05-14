@@ -9,8 +9,9 @@ import (
 
 type (
 	Config struct {
-		HTTP `yaml:"http"`
-		Log  `yaml:"log"`
+		HTTP     `yaml:"http"`
+		Log      `yaml:"log"`
+		Database `yaml:"database"`
 	}
 
 	HTTP struct {
@@ -19,6 +20,12 @@ type (
 
 	Log struct {
 		Level string `yaml:"level" env:"LOG_LEVEL"`
+	}
+
+	Database struct {
+		Driver     string `yaml:"driver"`
+		DSN        string `yaml:"dsn"`
+		Migrations string `yaml:"migrations"`
 	}
 )
 
