@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage"
+	"github.com/pressly/goose/v3"
 	"github.com/stretchr/testify/require"
 )
 
@@ -53,26 +54,17 @@ func TestStorage_Create(t *testing.T) {
 		},
 	}
 
-	setup := func() storage.EventStorage {
-		root := RootDir()
-		st := New(Config{
-			StorageType:    "postgres",
-			DSN:            "postgresql://postgres@localhost:5432/calendar?sslmode=disable",
-			MigrationsPath: filepath.Join(root, "migrations"),
-		})
-		err := st.Connect(context.Background())
-		require.NoError(t, err)
-
-		err = st.Migrate()
-		require.NoError(t, err)
-
-		return st
-	}
+	storageDB := New(Config{
+		StorageType:    "postgres",
+		DSN:            "postgresql://postgres@localhost:5432/calendar_test?sslmode=disable",
+		MigrationsPath: filepath.Join(RootDir(), "migrations"),
+	})
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := setup()
+			s := setupDB(t, storageDB)
 			err := s.Create(tt.input)
+			defer teardownDB(t, storageDB)
 
 			if tt.wantErr != nil {
 				require.Error(t, err)
@@ -89,6 +81,28 @@ func TestStorage_Create(t *testing.T) {
 			}
 		})
 	}
+}
+
+func setupDB(t *testing.T, storageDB *Storage) storage.EventStorage {
+	t.Helper()
+
+	err := storageDB.Connect(context.Background())
+	require.NoError(t, err)
+
+	err = storageDB.Migrate()
+	require.NoError(t, err)
+
+	return storageDB
+}
+
+func teardownDB(t *testing.T, storageDB *Storage) {
+	t.Helper()
+
+	err := goose.DownTo(storageDB.db.DB, storageDB.migrationsPath, 0)
+	require.NoError(t, err)
+
+	err = storageDB.db.Close()
+	require.NoError(t, err)
 }
 
 func RootDir() string {
