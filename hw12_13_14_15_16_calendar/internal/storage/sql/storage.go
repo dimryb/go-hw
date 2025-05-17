@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage"
-	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq"
-	"github.com/pressly/goose/v3"
+	"github.com/jmoiron/sqlx"     //nolint:depguard
+	_ "github.com/lib/pq"         //nolint:depguard
+	"github.com/pressly/goose/v3" //nolint:depguard
 )
 
 type Config struct {
@@ -86,6 +86,9 @@ func (s *Storage) Create(event storage.Event) error {
 	}
 
 	overlap, err := s.isOverlapping(event)
+	if err != nil {
+		return fmt.Errorf("checking overlapping events: %w", err)
+	}
 	if overlap {
 		return storage.ErrConflictOverlap
 	}
@@ -96,8 +99,9 @@ func (s *Storage) Create(event storage.Event) error {
         ) VALUES (
             :id, :title, :start_time, :end_time, :description, :user_id, :notify_before
         )
-    `, event)
-
+    `,
+		event,
+	)
 	if err != nil {
 		return fmt.Errorf("failed to create event: %w", err)
 	}

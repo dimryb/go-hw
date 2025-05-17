@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage"
-	"github.com/pressly/goose/v3"
-	"github.com/stretchr/testify/require"
+	"github.com/pressly/goose/v3"         //nolint:depguard
+	"github.com/stretchr/testify/require" //nolint:depguard
 )
 
 type EventNoTime struct {
@@ -152,6 +152,6 @@ func teardownDB(t *testing.T, storageDB *Storage) {
 }
 
 func RootDir() string {
-	_, currentFile, _, _ := runtime.Caller(0)
+	_, currentFile, _, _ := runtime.Caller(0) //nolint:dogsled
 	return filepath.Join(filepath.Dir(currentFile), "..", "..", "..")
 }
