@@ -76,14 +76,32 @@ func (s *Storage) Migrate() error {
 }
 
 func (s *Storage) Create(event storage.Event) error {
-	_, err := s.db.NamedExec(`
+	_, err := s.GetByID(event.ID)
+	if err == nil {
+		return storage.ErrAlreadyExists
+	}
+
+	if !errors.Is(err, storage.ErrEventNotFound) {
+		return fmt.Errorf("checking existing event: %w", err)
+	}
+
+	overlap, err := s.isOverlapping(event)
+	if overlap {
+		return storage.ErrConflictOverlap
+	}
+
+	_, err = s.db.NamedExec(`
         INSERT INTO events (
             id, title, start_time, end_time, description, user_id, notify_before
         ) VALUES (
             :id, :title, :start_time, :end_time, :description, :user_id, :notify_before
         )
     `, event)
-	return err
+
+	if err != nil {
+		return fmt.Errorf("failed to create event: %w", err)
+	}
+	return nil
 }
 
 func (s *Storage) Update(event storage.Event) error {
@@ -155,4 +173,19 @@ func (s *Storage) ListByUserInRange(userID string, from, to time.Time) ([]storag
     `
 	err := s.db.Select(&events, query, userID, from, to)
 	return events, err
+}
+
+func (s *Storage) isOverlapping(event storage.Event) (bool, error) {
+	const query = `
+        SELECT EXISTS (
+            SELECT 1 FROM events 
+            WHERE user_id = $1 AND NOT (end_time <= $2 OR start_time >= $3)
+        )`
+
+	var exists bool
+	if err := s.db.Get(&exists, query, event.UserID, event.StartTime, event.EndTime); err != nil {
+		return false, err
+	}
+
+	return exists, nil
 }

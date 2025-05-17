@@ -37,7 +37,6 @@ func TestStorage_Create(t *testing.T) {
 	}
 
 	now := time.Now()
-
 	event := storage.Event{
 		ID:          "1",
 		Title:       "Meeting",
@@ -50,11 +49,54 @@ func TestStorage_Create(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   storage.Event
+		setup   func(*Storage) storage.EventStorage
 		wantErr error
 	}{
 		{
-			name:    "success create new event",
-			input:   event,
+			name:  "success create new event",
+			input: event,
+			setup: func(storageDB *Storage) storage.EventStorage {
+				return storageDB
+			},
+			wantErr: nil,
+		},
+		{
+			name:  "fail event already exists",
+			input: event,
+			setup: func(storageDB *Storage) storage.EventStorage {
+				_ = storageDB.Create(event)
+				return storageDB
+			},
+			wantErr: storage.ErrAlreadyExists,
+		},
+		{
+			name: "fail time overlap",
+			input: storage.Event{
+				ID:        "2",
+				Title:     "Another Meeting",
+				StartTime: now.Add(30 * time.Minute),
+				EndTime:   now.Add(time.Hour + 30*time.Minute),
+				UserID:    "user1",
+			},
+			setup: func(storageDB *Storage) storage.EventStorage {
+				_ = storageDB.Create(event)
+				return storageDB
+			},
+			wantErr: storage.ErrConflictOverlap,
+		},
+		{
+			name: "success different user same time",
+			input: storage.Event{
+				ID:        "2",
+				Title:     "Another Meeting",
+				StartTime: now.Add(30 * time.Minute),
+				EndTime:   now.Add(time.Hour + 30*time.Minute),
+				UserID:    "user2",
+			},
+			setup: func(storageDB *Storage) storage.EventStorage {
+				_ = storageDB.Create(event)
+				return storageDB
+			},
 			wantErr: nil,
 		},
 	}
@@ -67,9 +109,10 @@ func TestStorage_Create(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := setupDB(t, storageDB)
-			err := s.Create(tt.input)
+			initDB(t, storageDB)
+			s := tt.setup(storageDB)
 			defer teardownDB(t, storageDB)
+			err := s.Create(tt.input)
 
 			if tt.wantErr != nil {
 				require.Error(t, err)
@@ -88,7 +131,7 @@ func TestStorage_Create(t *testing.T) {
 	}
 }
 
-func setupDB(t *testing.T, storageDB *Storage) storage.EventStorage {
+func initDB(t *testing.T, storageDB *Storage) {
 	t.Helper()
 
 	err := storageDB.Connect(context.Background())
@@ -96,8 +139,6 @@ func setupDB(t *testing.T, storageDB *Storage) storage.EventStorage {
 
 	err = storageDB.Migrate()
 	require.NoError(t, err)
-
-	return storageDB
 }
 
 func teardownDB(t *testing.T, storageDB *Storage) {
