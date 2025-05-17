@@ -2,6 +2,7 @@ package sqlstorage
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -31,6 +32,10 @@ func eventToNoTime(e storage.Event) EventNoTime {
 }
 
 func TestStorage_Create(t *testing.T) {
+	if os.Getenv("TEST_SQL") == "" {
+		t.Skip("TEST_SQL not set")
+	}
+
 	now := time.Now()
 
 	event := storage.Event{
