@@ -9,6 +9,7 @@ import (
 
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage"
 	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
 	"github.com/pressly/goose/v3"
 )
 
@@ -59,11 +60,15 @@ func (s *Storage) Close(_ context.Context) error {
 }
 
 func (s *Storage) Migrate() error {
+	if s.db == nil {
+		return fmt.Errorf("database connection is not established")
+	}
+
 	if err := goose.SetDialect(s.storageType); err != nil {
 		return fmt.Errorf("failed to set dialect: %w", err)
 	}
 
-	if err := goose.Up(nil, s.migrationsPath); err != nil {
+	if err := goose.Up(s.db.DB, s.migrationsPath); err != nil {
 		return fmt.Errorf("failed to apply migrations: %w", err)
 	}
 
