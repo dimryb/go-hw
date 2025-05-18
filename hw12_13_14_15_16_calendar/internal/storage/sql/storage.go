@@ -109,6 +109,21 @@ func (s *Storage) Create(event storage.Event) error {
 }
 
 func (s *Storage) Update(event storage.Event) error {
+	existing, err := s.GetByID(event.ID)
+	if err != nil {
+		return err
+	}
+
+	if existing.UserID == event.UserID {
+		overlap, err := s.isOverlapping(event)
+		if err != nil {
+			return fmt.Errorf("checking overlapping events: %w", err)
+		}
+		if overlap {
+			return storage.ErrConflictOverlap
+		}
+	}
+
 	res, err := s.db.NamedExec(`
         UPDATE events SET
             title = :title,
@@ -120,7 +135,7 @@ func (s *Storage) Update(event storage.Event) error {
         WHERE id = :id
     `, event)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to update event: %w", err)
 	}
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
@@ -183,11 +198,19 @@ func (s *Storage) isOverlapping(event storage.Event) (bool, error) {
 	const query = `
         SELECT EXISTS (
             SELECT 1 FROM events 
-            WHERE user_id = $1 AND NOT (end_time <= $2 OR start_time >= $3)
+            WHERE user_id = $1 AND id != $2
+            AND end_time > $3 AND start_time < $4
         )`
 
 	var exists bool
-	if err := s.db.Get(&exists, query, event.UserID, event.StartTime, event.EndTime); err != nil {
+	err := s.db.Get(&exists, query,
+		event.UserID,
+		event.ID,
+		event.StartTime,
+		event.EndTime,
+	)
+
+	if err != nil {
 		return false, err
 	}
 
