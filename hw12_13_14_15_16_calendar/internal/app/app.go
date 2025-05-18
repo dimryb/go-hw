@@ -2,8 +2,8 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"log"
-	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -11,7 +11,9 @@ import (
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/config"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/logger"
 	internalhttp "github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/server/http"
+	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage"
 	memorystorage "github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage/memory"
+	sqlstorage "github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage/sql"
 )
 
 type App struct {
@@ -24,9 +26,18 @@ type Logger interface {
 	Info(string)
 	Warn(string)
 	Error(string)
+	Fatal(string)
 }
 
-type Storage interface { // TODO
+type Storage interface {
+	Create(event storage.Event) error
+	Update(event storage.Event) error
+	Delete(id string) error
+
+	GetByID(id string) (storage.Event, error)
+	List() ([]storage.Event, error)
+	ListByUser(userID string) ([]storage.Event, error)
+	ListByUserInRange(userID string, from, to time.Time) ([]storage.Event, error)
 }
 
 func Run(configPath string) {
@@ -37,10 +48,39 @@ func Run(configPath string) {
 
 	logg := logger.New(cfg.Log.Level)
 
-	storage := memorystorage.New()
+	fmt.Println(cfg.Database)
+
+	var storageApp Storage
+
+	switch cfg.Database.Type {
+	case "memory":
+		storageApp = memorystorage.New()
+	case "postgres":
+		sqlStorage := sqlstorage.New(sqlstorage.Config{
+			StorageType:    cfg.Database.Type,
+			DSN:            cfg.Database.DSN,
+			MigrationsPath: cfg.Database.MigrationsPath,
+		})
+
+		ctx, cancel := context.WithTimeout(context.Background(), cfg.Database.Timeout)
+		defer cancel()
+
+		if err := sqlStorage.Connect(ctx); err != nil {
+			logg.Fatal("failed to connect to database: " + err.Error())
+		}
+
+		if err := sqlStorage.Migrate(); err != nil {
+			logg.Fatal("failed to apply migrations: " + err.Error())
+		}
+
+		storageApp = sqlStorage
+	default:
+		logg.Fatal("unknown storage type: " + cfg.Database.Type)
+	}
+
 	calendar := &App{
 		logger:  logg,
-		storage: storage,
+		storage: storageApp,
 	}
 
 	server := internalhttp.NewServer(logg, calendar)
@@ -56,23 +96,18 @@ func Run(configPath string) {
 		defer cancel()
 
 		if err := server.Stop(ctx); err != nil {
-			calendar.logger.Error("failed to stop http server: " + err.Error())
+			logg.Error("failed to stop http server: " + err.Error())
 		}
 	}()
 
-	calendar.logger.Info("calendar is running...")
+	logg.Info("calendar is running...")
 
 	if err := server.Start(ctx); err != nil {
-		calendar.logger.Error("failed to start http server: " + err.Error())
 		cancel()
-		os.Exit(1) //nolint:gocritic
+		logg.Fatal("failed to start http server: " + err.Error())
 	}
 }
 
-func (a *App) CreateEvent(ctx context.Context, id, title string) error {
-	// TODO
-	return nil
-	// return a.storage.CreateEvent(storage.Event{ID: id, Title: title})
+func (a *App) CreateEvent(_ context.Context, id, title string) error {
+	return a.storage.Create(storage.Event{ID: id, Title: title})
 }
-
-// TODO

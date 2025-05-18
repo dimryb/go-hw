@@ -44,3 +44,7 @@ func (Logger) Warn(msg string) {
 func (Logger) Error(msg string) {
 	logrus.Error(msg)
 }
+
+func (Logger) Fatal(msg string) {
+	logrus.Fatal(msg)
+}

@@ -14,6 +14,7 @@ type Logger interface {
 	Info(string)
 	Warn(string)
 	Error(string)
+	Fatal(string)
 }
 
 type Application interface { // TODO

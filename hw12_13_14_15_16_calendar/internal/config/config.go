@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"path"
+	"time"
 
 	"github.com/ilyakaznacheev/cleanenv" //nolint: depguard
 )
@@ -23,9 +24,10 @@ type (
 	}
 
 	Database struct {
-		Driver     string `yaml:"driver"`
-		DSN        string `yaml:"dsn"`
-		Migrations string `yaml:"migrations"`
+		Type           string        `yaml:"type"`
+		DSN            string        `yaml:"dsn"`
+		MigrationsPath string        `yaml:"migrations" env:"MIGRATIONS_PATH"`
+		Timeout        time.Duration `yaml:"timeout"`
 	}
 )
 
@@ -44,5 +46,3 @@ func NewConfig(configPath string) (*Config, error) {
 
 	return cfg, nil
 }
-
-// TODO
