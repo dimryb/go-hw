@@ -116,5 +116,5 @@ func (s *Storage) ListByUserInRange(userID string, from, to time.Time) ([]storag
 }
 
 func isOverlapping(a, b storage.Event) bool {
-	return !a.EndTime.Before(b.StartTime) && !b.EndTime.Before(a.StartTime)
+	return a.StartTime.Before(b.EndTime) && b.StartTime.Before(a.EndTime)
 }

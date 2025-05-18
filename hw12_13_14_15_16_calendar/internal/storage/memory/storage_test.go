@@ -160,7 +160,7 @@ func TestStorage_Update(t *testing.T) {
 				_ = s.Create(storage.Event{
 					ID:        "2",
 					Title:     "Another",
-					StartTime: now.Add(90 * time.Minute),
+					StartTime: now.Add(time.Hour + 29*time.Minute),
 					EndTime:   now.Add(2 * time.Hour),
 					UserID:    "user1",
 				})
@@ -169,12 +169,12 @@ func TestStorage_Update(t *testing.T) {
 			wantErr: storage.ErrConflictOverlap,
 		},
 		{
-			name: "no time overlap",
+			name: "success update with no overlap",
 			input: storage.Event{
 				ID:        "1",
 				Title:     "Meeting",
 				StartTime: now.Add(30 * time.Minute),
-				EndTime:   now.Add(time.Hour + 29*time.Minute),
+				EndTime:   now.Add(time.Hour + 30*time.Minute),
 				UserID:    "user1",
 			},
 			setup: func() storage.EventStorage {
