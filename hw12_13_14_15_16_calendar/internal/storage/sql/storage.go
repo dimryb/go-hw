@@ -209,7 +209,6 @@ func (s *Storage) isOverlapping(event storage.Event) (bool, error) {
 		event.StartTime,
 		event.EndTime,
 	)
-
 	if err != nil {
 		return false, err
 	}
