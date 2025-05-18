@@ -16,7 +16,12 @@ type (
 	}
 
 	HTTP struct {
-		Port string `yaml:"port" env:"HTTP_PORT"`
+		Host              string        `yaml:"host" env:"HTTP_HOST"`
+		Port              string        `yaml:"port" env:"HTTP_PORT"`
+		ReadTimeout       time.Duration `yaml:"readTimeout"`
+		WriteTimeout      time.Duration `yaml:"writeTimeout"`
+		IdleTimeout       time.Duration `yaml:"idleTimeout"`
+		ReadHeaderTimeout time.Duration `yaml:"readHeaderTimeout"`
 	}
 
 	Log struct {

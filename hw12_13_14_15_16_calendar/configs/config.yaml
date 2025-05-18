@@ -1,10 +1,16 @@
 http:
+  host: localhost
   port: 8080
+  readTimeout: "10s"
+  writeTimeout: "10s"
+  idleTimeout: "30s"
+  readHeaderTimeout: "2s"
 
 log:
   level: 'debug'
 
 database:
-  driver: postgres
-  dsn: "postgres://calendar_user:calendar_password@localhost:5432/calendar?sslmode=disable"
-  migration: "./migrations"
+  type: postgres
+  dsn: "postgresql://postgres@localhost:5432/calendar_test?sslmode=disable"
+  migration: "migrations1"
+  timeout: "10s"
