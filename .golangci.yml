@@ -16,12 +16,14 @@ linters-settings:
           - "!$test"
         allow:
           - $gostd
+          - github.com/dimryb/go-hw
       Test:
         files:
           - $test
         allow:
           - $gostd
           - github.com/stretchr/testify
+          - github.com/dimryb/go-hw
 issues:
   exclude-rules:
     - path: _test\.go

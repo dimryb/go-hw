@@ -1,5 +1,16 @@
-[logger]
-level = "INFO"
+http:
+  host: localhost
+  port: 8080
+  readTimeout: "10s"
+  writeTimeout: "10s"
+  idleTimeout: "30s"
+  readHeaderTimeout: "2s"
 
-# TODO
-# ...
+log:
+  level: 'debug'
+
+database:
+  type: postgres
+  dsn: "postgresql://postgres@localhost:5432/calendar_test?sslmode=disable"
+  migration: "migrations1"
+  timeout: "10s"
