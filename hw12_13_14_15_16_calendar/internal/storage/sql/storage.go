@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage"
+	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage/common"
 	"github.com/jmoiron/sqlx"     //nolint:depguard
 	_ "github.com/lib/pq"         //nolint:depguard
 	"github.com/pressly/goose/v3" //nolint:depguard
@@ -75,13 +75,13 @@ func (s *Storage) Migrate() error {
 	return nil
 }
 
-func (s *Storage) Create(event storage.Event) error {
+func (s *Storage) Create(event storagecommon.Event) error {
 	_, err := s.GetByID(event.ID)
 	if err == nil {
-		return storage.ErrAlreadyExists
+		return storagecommon.ErrAlreadyExists
 	}
 
-	if !errors.Is(err, storage.ErrEventNotFound) {
+	if !errors.Is(err, storagecommon.ErrEventNotFound) {
 		return fmt.Errorf("checking existing event: %w", err)
 	}
 
@@ -90,7 +90,7 @@ func (s *Storage) Create(event storage.Event) error {
 		return fmt.Errorf("checking overlapping events: %w", err)
 	}
 	if overlap {
-		return storage.ErrConflictOverlap
+		return storagecommon.ErrConflictOverlap
 	}
 
 	_, err = s.db.NamedExec(`
@@ -108,7 +108,7 @@ func (s *Storage) Create(event storage.Event) error {
 	return nil
 }
 
-func (s *Storage) Update(event storage.Event) error {
+func (s *Storage) Update(event storagecommon.Event) error {
 	existing, err := s.GetByID(event.ID)
 	if err != nil {
 		return err
@@ -120,7 +120,7 @@ func (s *Storage) Update(event storage.Event) error {
 			return fmt.Errorf("checking overlapping events: %w", err)
 		}
 		if overlap {
-			return storage.ErrConflictOverlap
+			return storagecommon.ErrConflictOverlap
 		}
 	}
 
@@ -142,7 +142,7 @@ func (s *Storage) Update(event storage.Event) error {
 		return fmt.Errorf("failed to get rows affected: %w", err)
 	}
 	if rowsAffected == 0 {
-		return storage.ErrEventNotFound
+		return storagecommon.ErrEventNotFound
 	}
 	return nil
 }
@@ -157,34 +157,34 @@ func (s *Storage) Delete(id string) error {
 		return fmt.Errorf("failed to get rows affected: %w", err)
 	}
 	if rowsAffected == 0 {
-		return storage.ErrEventNotFound
+		return storagecommon.ErrEventNotFound
 	}
 	return nil
 }
 
-func (s *Storage) GetByID(id string) (storage.Event, error) {
-	var event storage.Event
+func (s *Storage) GetByID(id string) (storagecommon.Event, error) {
+	var event storagecommon.Event
 	err := s.db.Get(&event, "SELECT * FROM events WHERE id = $1", id)
 	if errors.Is(err, sql.ErrNoRows) {
-		return storage.Event{}, storage.ErrEventNotFound
+		return storagecommon.Event{}, storagecommon.ErrEventNotFound
 	}
 	return event, err
 }
 
-func (s *Storage) List() ([]storage.Event, error) {
-	var events []storage.Event
+func (s *Storage) List() ([]storagecommon.Event, error) {
+	var events []storagecommon.Event
 	err := s.db.Select(&events, "SELECT * FROM events")
 	return events, err
 }
 
-func (s *Storage) ListByUser(userID string) ([]storage.Event, error) {
-	var events []storage.Event
+func (s *Storage) ListByUser(userID string) ([]storagecommon.Event, error) {
+	var events []storagecommon.Event
 	err := s.db.Select(&events, "SELECT * FROM events WHERE user_id = $1", userID)
 	return events, err
 }
 
-func (s *Storage) ListByUserInRange(userID string, from, to time.Time) ([]storage.Event, error) {
-	var events []storage.Event
+func (s *Storage) ListByUserInRange(userID string, from, to time.Time) ([]storagecommon.Event, error) {
+	var events []storagecommon.Event
 	query := `
         SELECT * FROM events 
         WHERE user_id = $1
@@ -194,7 +194,7 @@ func (s *Storage) ListByUserInRange(userID string, from, to time.Time) ([]storag
 	return events, err
 }
 
-func (s *Storage) isOverlapping(event storage.Event) (bool, error) {
+func (s *Storage) isOverlapping(event storagecommon.Event) (bool, error) {
 	const query = `
         SELECT EXISTS (
             SELECT 1 FROM events 

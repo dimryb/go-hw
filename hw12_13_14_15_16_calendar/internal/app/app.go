@@ -12,8 +12,7 @@ import (
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/logger"
 	internalhttp "github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/server/http"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage"
-	memorystorage "github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage/memory"
-	sqlstorage "github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage/sql"
+	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage/common"
 )
 
 type App struct {
@@ -30,14 +29,14 @@ type Logger interface {
 }
 
 type Storage interface {
-	Create(event storage.Event) error
-	Update(event storage.Event) error
+	Create(event storagecommon.Event) error
+	Update(event storagecommon.Event) error
 	Delete(id string) error
 
-	GetByID(id string) (storage.Event, error)
-	List() ([]storage.Event, error)
-	ListByUser(userID string) ([]storage.Event, error)
-	ListByUserInRange(userID string, from, to time.Time) ([]storage.Event, error)
+	GetByID(id string) (storagecommon.Event, error)
+	List() ([]storagecommon.Event, error)
+	ListByUser(userID string) ([]storagecommon.Event, error)
+	ListByUserInRange(userID string, from, to time.Time) ([]storagecommon.Event, error)
 }
 
 func Run(configPath string) {
@@ -51,31 +50,15 @@ func Run(configPath string) {
 	fmt.Println(cfg.Database)
 
 	var storageApp Storage
-
-	switch cfg.Database.Type {
-	case "memory":
-		storageApp = memorystorage.New()
-	case "postgres":
-		sqlStorage := sqlstorage.New(sqlstorage.Config{
-			StorageType:    cfg.Database.Type,
-			DSN:            cfg.Database.DSN,
-			MigrationsPath: cfg.Database.MigrationsPath,
-		})
-
-		ctx, cancel := context.WithTimeout(context.Background(), cfg.Database.Timeout)
-		defer cancel()
-
-		if err := sqlStorage.Connect(ctx); err != nil {
-			logg.Fatal("failed to connect to database: " + err.Error())
-		}
-
-		if err := sqlStorage.Migrate(); err != nil {
-			logg.Fatal("failed to apply migrations: " + err.Error())
-		}
-
-		storageApp = sqlStorage
-	default:
-		logg.Fatal("unknown storage type: " + cfg.Database.Type)
+	storageApp, err = storage.InitStorage(storage.Config{
+		Type:           cfg.Database.Type,
+		DSN:            cfg.Database.DSN,
+		MigrationsPath: cfg.Database.MigrationsPath,
+		Timeout:        cfg.Database.Timeout,
+		Migration:      true,
+	})
+	if err != nil {
+		logg.Fatal(err.Error())
 	}
 
 	calendar := &App{
@@ -116,5 +99,5 @@ func Run(configPath string) {
 }
 
 func (a *App) CreateEvent(_ context.Context, id, title string) error {
-	return a.storage.Create(storage.Event{ID: id, Title: title})
+	return a.storage.Create(storagecommon.Event{ID: id, Title: title})
 }

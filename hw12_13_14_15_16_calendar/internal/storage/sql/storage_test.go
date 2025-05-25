@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage"
+	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage/common"
 	"github.com/pressly/goose/v3"         //nolint:depguard
 	"github.com/stretchr/testify/require" //nolint:depguard
 )
@@ -21,7 +21,7 @@ type EventNoTime struct {
 	NotifyBefore int
 }
 
-func eventToNoTime(e storage.Event) EventNoTime {
+func eventToNoTime(e storagecommon.Event) EventNoTime {
 	return EventNoTime{
 		ID:           e.ID,
 		Title:        e.Title,
@@ -37,7 +37,7 @@ func TestStorage_Create(t *testing.T) {
 	}
 
 	now := time.Now()
-	event := storage.Event{
+	event := storagecommon.Event{
 		ID:          "1",
 		Title:       "Meeting",
 		StartTime:   now.UTC(),
@@ -48,14 +48,14 @@ func TestStorage_Create(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		input   storage.Event
-		setup   func(*Storage) storage.EventStorage
+		input   storagecommon.Event
+		setup   func(*Storage) storagecommon.EventStorage
 		wantErr error
 	}{
 		{
 			name:  "success create new event",
 			input: event,
-			setup: func(storageDB *Storage) storage.EventStorage {
+			setup: func(storageDB *Storage) storagecommon.EventStorage {
 				return storageDB
 			},
 			wantErr: nil,
@@ -63,37 +63,37 @@ func TestStorage_Create(t *testing.T) {
 		{
 			name:  "fail event already exists",
 			input: event,
-			setup: func(storageDB *Storage) storage.EventStorage {
+			setup: func(storageDB *Storage) storagecommon.EventStorage {
 				_ = storageDB.Create(event)
 				return storageDB
 			},
-			wantErr: storage.ErrAlreadyExists,
+			wantErr: storagecommon.ErrAlreadyExists,
 		},
 		{
 			name: "fail time overlap",
-			input: storage.Event{
+			input: storagecommon.Event{
 				ID:        "2",
 				Title:     "Another Meeting",
 				StartTime: now.Add(30 * time.Minute),
 				EndTime:   now.Add(time.Hour + 30*time.Minute),
 				UserID:    "user1",
 			},
-			setup: func(storageDB *Storage) storage.EventStorage {
+			setup: func(storageDB *Storage) storagecommon.EventStorage {
 				_ = storageDB.Create(event)
 				return storageDB
 			},
-			wantErr: storage.ErrConflictOverlap,
+			wantErr: storagecommon.ErrConflictOverlap,
 		},
 		{
 			name: "success different user same time",
-			input: storage.Event{
+			input: storagecommon.Event{
 				ID:        "2",
 				Title:     "Another Meeting",
 				StartTime: now.Add(30 * time.Minute),
 				EndTime:   now.Add(time.Hour + 30*time.Minute),
 				UserID:    "user2",
 			},
-			setup: func(storageDB *Storage) storage.EventStorage {
+			setup: func(storageDB *Storage) storagecommon.EventStorage {
 				_ = storageDB.Create(event)
 				return storageDB
 			},
@@ -133,7 +133,7 @@ func TestStorage_Update(t *testing.T) {
 
 	now := time.Now().UTC()
 
-	baseEvent := storage.Event{
+	baseEvent := storagecommon.Event{
 		ID:          "1",
 		Title:       "Meeting",
 		StartTime:   now,
@@ -144,14 +144,14 @@ func TestStorage_Update(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		input   storage.Event
-		setup   func(*Storage) storage.EventStorage
+		input   storagecommon.Event
+		setup   func(*Storage) storagecommon.EventStorage
 		wantErr error
 	}{
 		{
 			name:  "success update event",
 			input: baseEvent,
-			setup: func(storageDB *Storage) storage.EventStorage {
+			setup: func(storageDB *Storage) storagecommon.EventStorage {
 				_ = storageDB.Create(baseEvent)
 
 				updated := baseEvent
@@ -166,31 +166,31 @@ func TestStorage_Update(t *testing.T) {
 		},
 		{
 			name: "fail event not found",
-			input: storage.Event{
+			input: storagecommon.Event{
 				ID:        "2",
 				Title:     "Non-existent",
 				StartTime: now,
 				EndTime:   now.Add(time.Hour),
 				UserID:    "user1",
 			},
-			setup: func(storageDB *Storage) storage.EventStorage {
+			setup: func(storageDB *Storage) storagecommon.EventStorage {
 				_ = storageDB.Create(baseEvent)
 				return storageDB
 			},
-			wantErr: storage.ErrEventNotFound,
+			wantErr: storagecommon.ErrEventNotFound,
 		},
 		{
 			name: "fail time overlap",
-			input: storage.Event{
+			input: storagecommon.Event{
 				ID:        "1",
 				Title:     "Meeting",
 				StartTime: now.Add(30 * time.Minute),
 				EndTime:   now.Add(time.Hour + 30*time.Minute),
 				UserID:    "user1",
 			},
-			setup: func(storageDB *Storage) storage.EventStorage {
+			setup: func(storageDB *Storage) storagecommon.EventStorage {
 				_ = storageDB.Create(baseEvent)
-				_ = storageDB.Create(storage.Event{
+				_ = storageDB.Create(storagecommon.Event{
 					ID:        "2",
 					Title:     "Another",
 					StartTime: now.Add(time.Hour + 29*time.Minute),
@@ -199,20 +199,20 @@ func TestStorage_Update(t *testing.T) {
 				})
 				return storageDB
 			},
-			wantErr: storage.ErrConflictOverlap,
+			wantErr: storagecommon.ErrConflictOverlap,
 		},
 		{
 			name: "success update with no overlap",
-			input: storage.Event{
+			input: storagecommon.Event{
 				ID:        "1",
 				Title:     "Meeting",
 				StartTime: now.Add(30 * time.Minute),
 				EndTime:   now.Add(time.Hour + 30*time.Minute),
 				UserID:    "user1",
 			},
-			setup: func(storageDB *Storage) storage.EventStorage {
+			setup: func(storageDB *Storage) storagecommon.EventStorage {
 				_ = storageDB.Create(baseEvent)
-				_ = storageDB.Create(storage.Event{
+				_ = storageDB.Create(storagecommon.Event{
 					ID:        "2",
 					Title:     "Another",
 					StartTime: now.Add(90 * time.Minute),
@@ -258,7 +258,7 @@ func TestStorage_Delete(t *testing.T) {
 
 	now := time.Now().UTC()
 
-	event := storage.Event{
+	event := storagecommon.Event{
 		ID:          "1",
 		Title:       "Meeting",
 		StartTime:   now,
@@ -270,13 +270,13 @@ func TestStorage_Delete(t *testing.T) {
 	tests := []struct {
 		name    string
 		inputID string
-		setup   func(*Storage) storage.EventStorage
+		setup   func(*Storage) storagecommon.EventStorage
 		wantErr error
 	}{
 		{
 			name:    "success delete existing event",
 			inputID: "1",
-			setup: func(storageDB *Storage) storage.EventStorage {
+			setup: func(storageDB *Storage) storagecommon.EventStorage {
 				_ = storageDB.Create(event)
 				return storageDB
 			},
@@ -285,11 +285,11 @@ func TestStorage_Delete(t *testing.T) {
 		{
 			name:    "fail delete nonexistent event",
 			inputID: "2",
-			setup: func(storageDB *Storage) storage.EventStorage {
+			setup: func(storageDB *Storage) storagecommon.EventStorage {
 				_ = storageDB.Create(event)
 				return storageDB
 			},
-			wantErr: storage.ErrEventNotFound,
+			wantErr: storagecommon.ErrEventNotFound,
 		},
 	}
 
@@ -308,7 +308,7 @@ func TestStorage_Delete(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				_, err := s.GetByID(tt.inputID)
-				require.ErrorIs(t, err, storage.ErrEventNotFound)
+				require.ErrorIs(t, err, storagecommon.ErrEventNotFound)
 			}
 		})
 	}
@@ -321,7 +321,7 @@ func TestStorage_GetByID(t *testing.T) {
 
 	now := time.Now().UTC()
 
-	event := storage.Event{
+	event := storagecommon.Event{
 		ID:          "1",
 		Title:       "Meeting",
 		StartTime:   now,
@@ -333,13 +333,13 @@ func TestStorage_GetByID(t *testing.T) {
 	tests := []struct {
 		name    string
 		inputID string
-		setup   func(*Storage) storage.EventStorage
+		setup   func(*Storage) storagecommon.EventStorage
 		wantErr error
 	}{
 		{
 			name:    "success get existing event",
 			inputID: "1",
-			setup: func(storageDB *Storage) storage.EventStorage {
+			setup: func(storageDB *Storage) storagecommon.EventStorage {
 				_ = storageDB.Create(event)
 				return storageDB
 			},
@@ -348,11 +348,11 @@ func TestStorage_GetByID(t *testing.T) {
 		{
 			name:    "fail get nonexistent event",
 			inputID: "2",
-			setup: func(storageDB *Storage) storage.EventStorage {
+			setup: func(storageDB *Storage) storagecommon.EventStorage {
 				_ = storageDB.Create(event)
 				return storageDB
 			},
-			wantErr: storage.ErrEventNotFound,
+			wantErr: storagecommon.ErrEventNotFound,
 		},
 	}
 
@@ -385,7 +385,7 @@ func TestStorage_List(t *testing.T) {
 
 	now := time.Now().UTC()
 
-	events := []storage.Event{
+	events := []storagecommon.Event{
 		{
 			ID:        "1",
 			Title:     "Meeting 1",
@@ -404,12 +404,12 @@ func TestStorage_List(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		setup   func(*Storage) storage.EventStorage
+		setup   func(*Storage) storagecommon.EventStorage
 		wantLen int
 	}{
 		{
 			name: "list with events",
-			setup: func(storageDB *Storage) storage.EventStorage {
+			setup: func(storageDB *Storage) storagecommon.EventStorage {
 				for _, e := range events {
 					_ = storageDB.Create(e)
 				}
@@ -419,7 +419,7 @@ func TestStorage_List(t *testing.T) {
 		},
 		{
 			name: "empty list",
-			setup: func(storageDB *Storage) storage.EventStorage {
+			setup: func(storageDB *Storage) storagecommon.EventStorage {
 				return storageDB
 			},
 			wantLen: 0,
@@ -447,7 +447,7 @@ func TestStorage_ListByUser(t *testing.T) {
 
 	now := time.Now().UTC()
 
-	events := []storage.Event{
+	events := []storagecommon.Event{
 		{
 			ID:        "1",
 			Title:     "User1 Event 1",
@@ -474,13 +474,13 @@ func TestStorage_ListByUser(t *testing.T) {
 	tests := []struct {
 		name    string
 		userID  string
-		setup   func(*Storage) storage.EventStorage
+		setup   func(*Storage) storagecommon.EventStorage
 		wantLen int
 	}{
 		{
 			name:   "list user1 events",
 			userID: "user1",
-			setup: func(storageDB *Storage) storage.EventStorage {
+			setup: func(storageDB *Storage) storagecommon.EventStorage {
 				for _, e := range events {
 					_ = storageDB.Create(e)
 				}
@@ -491,7 +491,7 @@ func TestStorage_ListByUser(t *testing.T) {
 		{
 			name:   "list user2 events",
 			userID: "user2",
-			setup: func(storageDB *Storage) storage.EventStorage {
+			setup: func(storageDB *Storage) storagecommon.EventStorage {
 				for _, e := range events {
 					_ = storageDB.Create(e)
 				}
@@ -502,7 +502,7 @@ func TestStorage_ListByUser(t *testing.T) {
 		{
 			name:   "list empty for unknown user",
 			userID: "unknown",
-			setup: func(storageDB *Storage) storage.EventStorage {
+			setup: func(storageDB *Storage) storagecommon.EventStorage {
 				for _, e := range events {
 					_ = storageDB.Create(e)
 				}
@@ -533,7 +533,7 @@ func TestStorage_ListByUserInRange(t *testing.T) {
 
 	now := time.Now().UTC().Truncate(24 * time.Hour) // нормализуем до начала дня
 
-	events := []storage.Event{
+	events := []storagecommon.Event{
 		{
 			ID:        "1",
 			Title:     "Morning Meeting",
