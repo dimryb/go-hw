@@ -39,7 +39,7 @@ type Storage interface {
 	ListByUserInRange(userID string, from, to time.Time) ([]storagecommon.Event, error)
 }
 
-func Run(configPath string) {
+func Run(configPath string, migrate bool) {
 	cfg, err := config.NewConfig(configPath)
 	if err != nil {
 		log.Fatalf("Config error: %s", err)
@@ -55,7 +55,7 @@ func Run(configPath string) {
 		DSN:            cfg.Database.DSN,
 		MigrationsPath: cfg.Database.MigrationsPath,
 		Timeout:        cfg.Database.Timeout,
-		Migration:      true,
+		Migration:      migrate,
 	})
 	if err != nil {
 		logg.Fatal(err.Error())

@@ -7,9 +7,11 @@ import (
 )
 
 var configFile string
+var migrate bool
 
 func init() {
 	flag.StringVar(&configFile, "config", "configs/config.yaml", "Path to configuration file")
+	flag.BoolVar(&migrate, "migrate", false, "Migrate DB")
 }
 
 func main() {
@@ -20,5 +22,5 @@ func main() {
 		return
 	}
 
-	app.Run(configFile)
+	app.Run(configFile, migrate)
 }
