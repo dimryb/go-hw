@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package calendar;
+
+import "calendar/events.proto";
+
+service CalendarService {
+  rpc CreateEvent(Event) returns (CreateEventResponse);
+  rpc UpdateEvent(Event) returns (UpdateEventResponse);
+  rpc DeleteEvent(DeleteEventRequest) returns (DeleteEventResponse);
+  rpc GetEventByID(GetEventByIDRequest) returns (GetEventByIDResponse);
+  rpc ListEvents(ListEventsRequest) returns (ListEventsResponse);
+  rpc ListEventsByUser(ListEventsByUserRequest) returns (ListEventsResponse);
+  rpc ListEventsByUserInRange(ListEventsByUserInRangeRequest) returns (ListEventsResponse);
+}
+
+message CreateEventResponse {
+  string id = 1;
+  bool success = 2;
+}
+
+message UpdateEventResponse {
+  bool success = 1;
+}
+
+message DeleteEventRequest {
+  string id = 1;
+}
+
+message DeleteEventResponse {
+  bool success = 1;
+}
+
+message GetEventByIDRequest {
+  string id = 1;
+}
+
+message GetEventByIDResponse {
+  Event event = 1;
+}
+
+message ListEventsRequest {}
+
+message ListEventsResponse {
+  repeated Event events = 1;
+}
+
+message ListEventsByUserRequest {
+  string user_id = 1;
+}
+
+message ListEventsByUserInRangeRequest {
+  string user_id = 1;
+  int64 from = 2;
+  int64 to = 3;
+}
