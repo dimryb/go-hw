@@ -26,3 +26,6 @@ ehthumbs.db
 Thumbs.db
 .vscode/
 *.bak
+
+# Generated protobuf & gRPC
+*.pb.go

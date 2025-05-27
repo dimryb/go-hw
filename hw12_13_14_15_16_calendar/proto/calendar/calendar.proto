@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package calendar;
 
+option go_package = "github.com/dimryb/go-hw/hw12_13_14_15_calendar/proto/calendar";
+
 import "calendar/events.proto";
 
 service CalendarService {
