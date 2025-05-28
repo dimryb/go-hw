@@ -2,17 +2,18 @@ package grpc
 
 import (
 	"fmt"
+	"net"
+
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/proto/calendar"
 	"google.golang.org/grpc"
-	"net"
 )
 
 type Logger interface {
-	Debug(string, ...interface{})
-	Info(string, ...interface{})
-	Warn(string, ...interface{})
-	Error(string, ...interface{})
-	Fatal(string, ...interface{})
+	Debugf(string, ...interface{})
+	Infof(string, ...interface{})
+	Warnf(string, ...interface{})
+	Errorf(string, ...interface{})
+	Fatalf(string, ...interface{})
 }
 
 type Server struct {
@@ -37,7 +38,7 @@ func (s *Server) Run() error {
 	grpcServer := grpc.NewServer()
 	calendar.RegisterCalendarServiceServer(grpcServer, NewCalendarService())
 
-	s.log.Info("Starting gRPC server, port %s", s.cfg.Port)
+	s.log.Infof("Starting gRPC server, port %s", s.cfg.Port)
 	if err := grpcServer.Serve(lis); err != nil {
 		return fmt.Errorf("failed to serve: %w", err)
 	}

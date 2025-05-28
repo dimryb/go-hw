@@ -29,22 +29,22 @@ func New(level string) *Logger {
 	}
 }
 
-func (Logger) Debug(format string, args ...interface{}) {
+func (Logger) Debugf(format string, args ...interface{}) {
 	logrus.Debugf(format, args...)
 }
 
-func (Logger) Info(format string, args ...interface{}) {
+func (Logger) Infof(format string, args ...interface{}) {
 	logrus.Infof(format, args...)
 }
 
-func (Logger) Warn(format string, args ...interface{}) {
+func (Logger) Warnf(format string, args ...interface{}) {
 	logrus.Warnf(format, args...)
 }
 
-func (Logger) Error(format string, args ...interface{}) {
+func (Logger) Errorf(format string, args ...interface{}) {
 	logrus.Errorf(format, args...)
 }
 
-func (Logger) Fatal(format string, args ...interface{}) {
+func (Logger) Fatalf(format string, args ...interface{}) {
 	logrus.Fatalf(format, args...)
 }

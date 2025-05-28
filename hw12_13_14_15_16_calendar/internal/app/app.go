@@ -22,11 +22,11 @@ type App struct {
 }
 
 type Logger interface {
-	Debug(string, ...interface{})
-	Info(string, ...interface{})
-	Warn(string, ...interface{})
-	Error(string, ...interface{})
-	Fatal(string, ...interface{})
+	Debugf(string, ...interface{})
+	Infof(string, ...interface{})
+	Warnf(string, ...interface{})
+	Errorf(string, ...interface{})
+	Fatalf(string, ...interface{})
 }
 
 type Storage interface {
@@ -59,7 +59,7 @@ func Run(configPath string, migrate bool) {
 		Migration:      migrate,
 	})
 	if err != nil {
-		logg.Fatal(err.Error())
+		logg.Fatalf(err.Error())
 	}
 
 	calendar := &App{
@@ -78,7 +78,7 @@ func Run(configPath string, migrate bool) {
 
 	if cfg.GRPC.Enable {
 		go func() {
-			logg.Debug("gRPC server starting..")
+			logg.Debugf("gRPC server starting..")
 			grpcServer := grpc.NewServer(
 				grpc.ServerConfig{
 					Port: cfg.GRPC.Port,
@@ -86,9 +86,9 @@ func Run(configPath string, migrate bool) {
 				logg,
 			)
 			if err := grpcServer.Run(); err != nil {
-				logg.Fatal("Failed to start gRPC server: %s", err.Error())
+				logg.Fatalf("Failed to start gRPC server: %s", err.Error())
 			}
-			logg.Debug("gRPC server started")
+			logg.Debugf("gRPC server started")
 		}()
 	}
 
@@ -103,15 +103,15 @@ func Run(configPath string, migrate bool) {
 		defer cancel()
 
 		if err := server.Stop(ctx); err != nil {
-			logg.Error("failed to stop http server: " + err.Error())
+			logg.Errorf("failed to stop http server: " + err.Error())
 		}
 	}()
 
-	logg.Info("calendar is running...")
+	logg.Infof("calendar is running...")
 
 	if err := server.Start(ctx); err != nil {
 		cancel()
-		logg.Fatal("failed to start http server: " + err.Error())
+		logg.Fatalf("failed to start http server: " + err.Error())
 	}
 }
 

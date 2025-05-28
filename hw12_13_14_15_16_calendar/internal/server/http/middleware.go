@@ -41,7 +41,7 @@ func loggingMiddleware(logger Logger) func(next http.Handler) http.Handler {
 				r.UserAgent(),
 			)
 
-			logger.Info(logEntry)
+			logger.Infof(logEntry)
 		})
 	}
 }

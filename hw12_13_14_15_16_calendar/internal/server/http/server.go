@@ -17,11 +17,11 @@ type Server struct {
 }
 
 type Logger interface {
-	Debug(string, ...interface{})
-	Info(string, ...interface{})
-	Warn(string, ...interface{})
-	Error(string, ...interface{})
-	Fatal(string, ...interface{})
+	Debugf(string, ...interface{})
+	Infof(string, ...interface{})
+	Warnf(string, ...interface{})
+	Errorf(string, ...interface{})
+	Fatalf(string, ...interface{})
 }
 
 type Application interface {
@@ -61,17 +61,17 @@ func (s *Server) Start(_ context.Context) error {
 	addr := net.JoinHostPort(s.cfg.Host, s.cfg.Port)
 	s.server.Addr = addr
 
-	s.logger.Info(fmt.Sprintf("Starting HTTP server on %s", addr))
+	s.logger.Infof(fmt.Sprintf("Starting HTTP server on %s", addr))
 	err := s.server.ListenAndServe()
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
-		s.logger.Error("Failed to start HTTP server: " + err.Error())
+		s.logger.Errorf("Failed to start HTTP server: " + err.Error())
 		return err
 	}
 	return nil
 }
 
 func (s *Server) Stop(ctx context.Context) error {
-	s.logger.Info("Stopping HTTP server")
+	s.logger.Infof("Stopping HTTP server")
 	return s.server.Shutdown(ctx)
 }
 
