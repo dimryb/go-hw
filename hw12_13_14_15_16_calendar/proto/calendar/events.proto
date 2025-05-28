@@ -11,5 +11,5 @@ message Event {
   string description = 4;
   int64 start_time = 5;
   int64 end_time = 6;
-  int32 notify_before = 7;
+  int64 notify_before = 7;
 }
