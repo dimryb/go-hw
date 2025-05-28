@@ -13,6 +13,7 @@ type (
 		HTTP     `yaml:"http"`
 		Log      `yaml:"log"`
 		Database `yaml:"database"`
+		GRPC     `yaml:"grpc"`
 	}
 
 	HTTP struct {
@@ -33,6 +34,11 @@ type (
 		DSN            string        `yaml:"dsn"`
 		MigrationsPath string        `yaml:"migrations" env:"MIGRATIONS_PATH"`
 		Timeout        time.Duration `yaml:"timeout"`
+	}
+
+	GRPC struct {
+		Enable bool   `yaml:"enable"`
+		Port   string `yaml:"port" env:"GRPC_PORT"`
 	}
 )
 

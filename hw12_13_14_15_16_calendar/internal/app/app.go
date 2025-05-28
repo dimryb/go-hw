@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/config"
+	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/grpc"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/logger"
 	internalhttp "github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/server/http"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage"
@@ -74,6 +75,22 @@ func Run(configPath string, migrate bool) {
 		IdleTimeout:       cfg.HTTP.IdleTimeout,
 		ReadHeaderTimeout: cfg.HTTP.ReadHeaderTimeout,
 	})
+
+	if cfg.GRPC.Enable {
+		go func() {
+			logg.Debug("gRPC server starting..")
+			grpcServer := grpc.NewServer(
+				grpc.ServerConfig{
+					Port: cfg.GRPC.Port,
+				},
+				logg,
+			)
+			if err := grpcServer.Run(); err != nil {
+				logg.Fatal("Failed to start gRPC server: %s", err.Error())
+			}
+			logg.Debug("gRPC server started")
+		}()
+	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
