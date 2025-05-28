@@ -17,11 +17,11 @@ type Server struct {
 }
 
 type Logger interface {
-	Debug(string)
-	Info(string)
-	Warn(string)
-	Error(string)
-	Fatal(string)
+	Debug(string, ...interface{})
+	Info(string, ...interface{})
+	Warn(string, ...interface{})
+	Error(string, ...interface{})
+	Fatal(string, ...interface{})
 }
 
 type Application interface {

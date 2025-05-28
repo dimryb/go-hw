@@ -21,11 +21,11 @@ type App struct {
 }
 
 type Logger interface {
-	Debug(string)
-	Info(string)
-	Warn(string)
-	Error(string)
-	Fatal(string)
+	Debug(string, ...interface{})
+	Info(string, ...interface{})
+	Warn(string, ...interface{})
+	Error(string, ...interface{})
+	Fatal(string, ...interface{})
 }
 
 type Storage interface {
@@ -67,12 +67,12 @@ func Run(configPath string, migrate bool) {
 	}
 
 	server := internalhttp.NewServer(logg, calendar, internalhttp.ServerConfig{
-		Host:              cfg.Host,
-		Port:              cfg.Port,
-		ReadTimeout:       cfg.ReadTimeout,
-		WriteTimeout:      cfg.WriteTimeout,
-		IdleTimeout:       cfg.IdleTimeout,
-		ReadHeaderTimeout: cfg.ReadHeaderTimeout,
+		Host:              cfg.HTTP.Host,
+		Port:              cfg.HTTP.Port,
+		ReadTimeout:       cfg.HTTP.ReadTimeout,
+		WriteTimeout:      cfg.HTTP.WriteTimeout,
+		IdleTimeout:       cfg.HTTP.IdleTimeout,
+		ReadHeaderTimeout: cfg.HTTP.ReadHeaderTimeout,
 	})
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
