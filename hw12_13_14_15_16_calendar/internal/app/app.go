@@ -59,7 +59,7 @@ func Run(configPath string, migrate bool) {
 		Migration:      migrate,
 	})
 	if err != nil {
-		logg.Fatalf(err.Error())
+		logg.Fatalf("Failed init storage: %s", err.Error())
 	}
 
 	calendar := &App{
@@ -103,7 +103,7 @@ func Run(configPath string, migrate bool) {
 		defer cancel()
 
 		if err := server.Stop(ctx); err != nil {
-			logg.Errorf("failed to stop http server: " + err.Error())
+			logg.Errorf("failed to stop http server: %s", err.Error())
 		}
 	}()
 
@@ -111,7 +111,7 @@ func Run(configPath string, migrate bool) {
 
 	if err := server.Start(ctx); err != nil {
 		cancel()
-		logg.Fatalf("failed to start http server: " + err.Error())
+		logg.Fatalf("failed to start http server: %s", err.Error())
 	}
 }
 
