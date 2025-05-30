@@ -14,3 +14,7 @@ database:
   dsn: "postgresql://postgres@localhost:5432/calendar_test?sslmode=disable"
   migration: "migrations1"
   timeout: "10s"
+
+grpc:
+  enable: true
+  port: 50051

@@ -1,25 +1,49 @@
 package storage
 
 import (
+	"context"
 	"fmt"
 	"time"
+
+	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage/common"
+	memorystorage "github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage/memory"
+	sqlstorage "github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage/sql"
 )
 
-type EventStorage interface {
-	Create(event Event) error
-	Update(event Event) error
-	Delete(id string) error
-
-	GetByID(id string) (Event, error)
-	List() ([]Event, error)
-	ListByUser(userID string) ([]Event, error)
-	ListByUserInRange(userID string, from, to time.Time) ([]Event, error)
+type Config struct {
+	Type           string
+	DSN            string
+	MigrationsPath string
+	Timeout        time.Duration
+	Migration      bool
 }
 
-var (
-	ErrEventNotFound   = fmt.Errorf("event not found")
-	ErrDateBusy        = fmt.Errorf("the selected time is already busy")
-	ErrInvalidEvent    = fmt.Errorf("invalid event data")
-	ErrAlreadyExists   = fmt.Errorf("event already exists")
-	ErrConflictOverlap = fmt.Errorf("event overlaps with another event")
-)
+func InitStorage(cfg Config) (storagecommon.EventStorage, error) {
+	switch cfg.Type {
+	case "memory":
+		return memorystorage.New(), nil
+	case "postgres":
+		sqlStorage := sqlstorage.New(sqlstorage.Config{
+			StorageType:    cfg.Type,
+			DSN:            cfg.DSN,
+			MigrationsPath: cfg.MigrationsPath,
+		})
+
+		ctx, cancel := context.WithTimeout(context.Background(), cfg.Timeout)
+		defer cancel()
+
+		if err := sqlStorage.Connect(ctx); err != nil {
+			return nil, fmt.Errorf("failed to connect to database: %w", err)
+		}
+
+		if cfg.Migration {
+			if err := sqlStorage.Migrate(); err != nil {
+				return nil, fmt.Errorf("failed to migrate database: %w", err)
+			}
+		}
+
+		return sqlStorage, nil
+	default:
+		return nil, fmt.Errorf("unknown storage type: %s", cfg.Type)
+	}
+}

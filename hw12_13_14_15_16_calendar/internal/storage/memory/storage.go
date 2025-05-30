@@ -4,31 +4,31 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage"
+	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage/common"
 )
 
 type Storage struct {
-	events map[string]storage.Event
+	events map[string]storagecommon.Event
 	mu     sync.RWMutex
 }
 
 func New() *Storage {
 	return &Storage{
-		events: make(map[string]storage.Event),
+		events: make(map[string]storagecommon.Event),
 	}
 }
 
-func (s *Storage) Create(event storage.Event) error {
+func (s *Storage) Create(event storagecommon.Event) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if _, exists := s.events[event.ID]; exists {
-		return storage.ErrAlreadyExists
+		return storagecommon.ErrAlreadyExists
 	}
 
 	for _, e := range s.events {
 		if e.UserID == event.UserID && isOverlapping(e, event) {
-			return storage.ErrConflictOverlap
+			return storagecommon.ErrConflictOverlap
 		}
 	}
 
@@ -36,29 +36,29 @@ func (s *Storage) Create(event storage.Event) error {
 	return nil
 }
 
-func (s *Storage) GetByID(id string) (storage.Event, error) {
+func (s *Storage) GetByID(id string) (storagecommon.Event, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	event, ok := s.events[id]
 	if !ok {
-		return storage.Event{}, storage.ErrEventNotFound
+		return storagecommon.Event{}, storagecommon.ErrEventNotFound
 	}
 	return event, nil
 }
 
-func (s *Storage) Update(event storage.Event) error {
+func (s *Storage) Update(event storagecommon.Event) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	_, exist := s.events[event.ID]
 	if !exist {
-		return storage.ErrEventNotFound
+		return storagecommon.ErrEventNotFound
 	}
 
 	for id, e := range s.events {
 		if id != event.ID && e.UserID == event.UserID && isOverlapping(e, event) {
-			return storage.ErrConflictOverlap
+			return storagecommon.ErrConflictOverlap
 		}
 	}
 
@@ -71,29 +71,29 @@ func (s *Storage) Delete(id string) error {
 	defer s.mu.Unlock()
 
 	if _, exists := s.events[id]; !exists {
-		return storage.ErrEventNotFound
+		return storagecommon.ErrEventNotFound
 	}
 
 	delete(s.events, id)
 	return nil
 }
 
-func (s *Storage) List() ([]storage.Event, error) {
+func (s *Storage) List() ([]storagecommon.Event, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	result := make([]storage.Event, 0, len(s.events))
+	result := make([]storagecommon.Event, 0, len(s.events))
 	for _, v := range s.events {
 		result = append(result, v)
 	}
 	return result, nil
 }
 
-func (s *Storage) ListByUser(userID string) ([]storage.Event, error) {
+func (s *Storage) ListByUser(userID string) ([]storagecommon.Event, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	result := make([]storage.Event, 0)
+	result := make([]storagecommon.Event, 0)
 	for _, event := range s.events {
 		if event.UserID == userID {
 			result = append(result, event)
@@ -102,11 +102,11 @@ func (s *Storage) ListByUser(userID string) ([]storage.Event, error) {
 	return result, nil
 }
 
-func (s *Storage) ListByUserInRange(userID string, from, to time.Time) ([]storage.Event, error) {
+func (s *Storage) ListByUserInRange(userID string, from, to time.Time) ([]storagecommon.Event, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	result := make([]storage.Event, 0)
+	result := make([]storagecommon.Event, 0)
 	for _, event := range s.events {
 		if event.UserID == userID && !event.EndTime.Before(from) && !event.StartTime.After(to) {
 			result = append(result, event)
@@ -115,6 +115,6 @@ func (s *Storage) ListByUserInRange(userID string, from, to time.Time) ([]storag
 	return result, nil
 }
 
-func isOverlapping(a, b storage.Event) bool {
+func isOverlapping(a, b storagecommon.Event) bool {
 	return a.StartTime.Before(b.EndTime) && b.StartTime.Before(a.EndTime)
 }

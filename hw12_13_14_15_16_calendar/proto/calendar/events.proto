@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package calendar;
+
+option go_package = "github.com/dimryb/go-hw/hw12_13_14_15_calendar/proto/calendar";
+
+message Event {
+  string id = 1;
+  string user_id = 2;
+  string title = 3;
+  string description = 4;
+  int64 start_time = 5;
+  int64 end_time = 6;
+  int64 notify_before = 7;
+}

@@ -9,11 +9,11 @@ import (
 	"time"
 
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/config"
+	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/grpc"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/logger"
 	internalhttp "github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/server/http"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage"
-	memorystorage "github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage/memory"
-	sqlstorage "github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage/sql"
+	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage/common"
 )
 
 type App struct {
@@ -22,25 +22,25 @@ type App struct {
 }
 
 type Logger interface {
-	Debug(string)
-	Info(string)
-	Warn(string)
-	Error(string)
-	Fatal(string)
+	Debugf(string, ...interface{})
+	Infof(string, ...interface{})
+	Warnf(string, ...interface{})
+	Errorf(string, ...interface{})
+	Fatalf(string, ...interface{})
 }
 
 type Storage interface {
-	Create(event storage.Event) error
-	Update(event storage.Event) error
+	Create(event storagecommon.Event) error
+	Update(event storagecommon.Event) error
 	Delete(id string) error
 
-	GetByID(id string) (storage.Event, error)
-	List() ([]storage.Event, error)
-	ListByUser(userID string) ([]storage.Event, error)
-	ListByUserInRange(userID string, from, to time.Time) ([]storage.Event, error)
+	GetByID(id string) (storagecommon.Event, error)
+	List() ([]storagecommon.Event, error)
+	ListByUser(userID string) ([]storagecommon.Event, error)
+	ListByUserInRange(userID string, from, to time.Time) ([]storagecommon.Event, error)
 }
 
-func Run(configPath string) {
+func Run(configPath string, migrate bool) {
 	cfg, err := config.NewConfig(configPath)
 	if err != nil {
 		log.Fatalf("Config error: %s", err)
@@ -51,31 +51,15 @@ func Run(configPath string) {
 	fmt.Println(cfg.Database)
 
 	var storageApp Storage
-
-	switch cfg.Database.Type {
-	case "memory":
-		storageApp = memorystorage.New()
-	case "postgres":
-		sqlStorage := sqlstorage.New(sqlstorage.Config{
-			StorageType:    cfg.Database.Type,
-			DSN:            cfg.Database.DSN,
-			MigrationsPath: cfg.Database.MigrationsPath,
-		})
-
-		ctx, cancel := context.WithTimeout(context.Background(), cfg.Database.Timeout)
-		defer cancel()
-
-		if err := sqlStorage.Connect(ctx); err != nil {
-			logg.Fatal("failed to connect to database: " + err.Error())
-		}
-
-		if err := sqlStorage.Migrate(); err != nil {
-			logg.Fatal("failed to apply migrations: " + err.Error())
-		}
-
-		storageApp = sqlStorage
-	default:
-		logg.Fatal("unknown storage type: " + cfg.Database.Type)
+	storageApp, err = storage.InitStorage(storage.Config{
+		Type:           cfg.Database.Type,
+		DSN:            cfg.Database.DSN,
+		MigrationsPath: cfg.Database.MigrationsPath,
+		Timeout:        cfg.Database.Timeout,
+		Migration:      migrate,
+	})
+	if err != nil {
+		logg.Fatalf("Failed init storage: %s", err.Error())
 	}
 
 	calendar := &App{
@@ -84,13 +68,30 @@ func Run(configPath string) {
 	}
 
 	server := internalhttp.NewServer(logg, calendar, internalhttp.ServerConfig{
-		Host:              cfg.Host,
-		Port:              cfg.Port,
-		ReadTimeout:       cfg.ReadTimeout,
-		WriteTimeout:      cfg.WriteTimeout,
-		IdleTimeout:       cfg.IdleTimeout,
-		ReadHeaderTimeout: cfg.ReadHeaderTimeout,
+		Host:              cfg.HTTP.Host,
+		Port:              cfg.HTTP.Port,
+		ReadTimeout:       cfg.HTTP.ReadTimeout,
+		WriteTimeout:      cfg.HTTP.WriteTimeout,
+		IdleTimeout:       cfg.HTTP.IdleTimeout,
+		ReadHeaderTimeout: cfg.HTTP.ReadHeaderTimeout,
 	})
+
+	if cfg.GRPC.Enable {
+		go func() {
+			logg.Debugf("gRPC server starting..")
+			grpcServer := grpc.NewServer(
+				grpc.ServerConfig{
+					Port: cfg.GRPC.Port,
+				},
+				logg,
+				storageApp,
+			)
+			if err := grpcServer.Run(); err != nil {
+				logg.Fatalf("Failed to start gRPC server: %s", err.Error())
+			}
+			logg.Debugf("gRPC server started")
+		}()
+	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
@@ -103,18 +104,18 @@ func Run(configPath string) {
 		defer cancel()
 
 		if err := server.Stop(ctx); err != nil {
-			logg.Error("failed to stop http server: " + err.Error())
+			logg.Errorf("failed to stop http server: %s", err.Error())
 		}
 	}()
 
-	logg.Info("calendar is running...")
+	logg.Infof("calendar is running...")
 
 	if err := server.Start(ctx); err != nil {
 		cancel()
-		logg.Fatal("failed to start http server: " + err.Error())
+		logg.Fatalf("failed to start http server: %s", err.Error())
 	}
 }
 
 func (a *App) CreateEvent(_ context.Context, id, title string) error {
-	return a.storage.Create(storage.Event{ID: id, Title: title})
+	return a.storage.Create(storagecommon.Event{ID: id, Title: title})
 }

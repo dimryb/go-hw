@@ -6,10 +6,14 @@ import (
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/app"
 )
 
-var configFile string
+var (
+	configFile string
+	migrate    bool
+)
 
 func init() {
 	flag.StringVar(&configFile, "config", "configs/config.yaml", "Path to configuration file")
+	flag.BoolVar(&migrate, "migrate", false, "Migrate DB")
 }
 
 func main() {
@@ -20,5 +24,5 @@ func main() {
 		return
 	}
 
-	app.Run(configFile)
+	app.Run(configFile, migrate)
 }
