@@ -7,6 +7,7 @@ import (
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/grpc/interceptors"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/proto/calendar"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 type Logger interface {
@@ -45,6 +46,8 @@ func (s *Server) Run() error {
 		grpc.UnaryInterceptor(interceptors.UnaryLoggerInterceptor(s.log)),
 	)
 	calendar.RegisterCalendarServiceServer(grpcServer, NewCalendarService(s.storage))
+
+	reflection.Register(grpcServer)
 
 	s.log.Infof("Starting gRPC server, port %s", s.cfg.Port)
 	if err := grpcServer.Serve(lis); err != nil {
