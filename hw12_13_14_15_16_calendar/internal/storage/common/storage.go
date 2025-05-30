@@ -2,7 +2,7 @@ package storagecommon
 
 import "time"
 
-//go:generate mockgen -source=storage.go -package=mocks -destination=../../mocks/mock_storage.go
+//go:generate mockgen -source=storage.go -package=mocks -destination=../../../mocks/mock_storage.go
 type EventStorage interface {
 	Create(event Event) error
 	Update(event Event) error
