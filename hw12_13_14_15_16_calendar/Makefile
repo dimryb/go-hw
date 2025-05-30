@@ -38,4 +38,7 @@ generate:
 		--go-grpc_out=proto --go-grpc_opt=paths=source_relative \
 		proto/calendar/*.proto
 
-.PHONY: build run build-img run-img version test lint generate
+generate-mocks:
+	go generate ./...
+
+.PHONY: build run build-img run-img version test lint generate generate-mocks
