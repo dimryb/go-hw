@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/grpc/interceptors"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/proto/calendar"
 	"google.golang.org/grpc"
 )
@@ -40,7 +41,9 @@ func (s *Server) Run() error {
 		return fmt.Errorf("failed to listen: %w", err)
 	}
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(interceptors.UnaryLoggerInterceptor(s.log)),
+	)
 	calendar.RegisterCalendarServiceServer(grpcServer, NewCalendarService(s.storage))
 
 	s.log.Infof("Starting gRPC server, port %s", s.cfg.Port)
