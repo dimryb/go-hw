@@ -17,16 +17,21 @@ type Logger interface {
 }
 
 type Server struct {
-	cfg ServerConfig
-	log Logger
+	cfg     ServerConfig
+	log     Logger
+	storage Storage
 }
 
 type ServerConfig struct {
 	Port string
 }
 
-func NewServer(cfg ServerConfig, log Logger) *Server {
-	return &Server{cfg: cfg, log: log}
+func NewServer(cfg ServerConfig, log Logger, storage Storage) *Server {
+	return &Server{
+		cfg:     cfg,
+		log:     log,
+		storage: storage,
+	}
 }
 
 func (s *Server) Run() error {
@@ -36,7 +41,7 @@ func (s *Server) Run() error {
 	}
 
 	grpcServer := grpc.NewServer()
-	calendar.RegisterCalendarServiceServer(grpcServer, NewCalendarService())
+	calendar.RegisterCalendarServiceServer(grpcServer, NewCalendarService(s.storage))
 
 	s.log.Infof("Starting gRPC server, port %s", s.cfg.Port)
 	if err := grpcServer.Serve(lis); err != nil {

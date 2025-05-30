@@ -84,6 +84,7 @@ func Run(configPath string, migrate bool) {
 					Port: cfg.GRPC.Port,
 				},
 				logg,
+				storageApp,
 			)
 			if err := grpcServer.Run(); err != nil {
 				logg.Fatalf("Failed to start gRPC server: %s", err.Error())
