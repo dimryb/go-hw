@@ -1,0 +1,109 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a server for Calendar",
+        "title": "Receipt Hub API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/.",
+    "paths": {
+        "/event/create": {
+            "post": {
+                "description": "Create a new calendar event",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "events"
+                ],
+                "summary": "Create a new event",
+                "parameters": [
+                    {
+                        "description": "Event data",
+                        "name": "event",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internalhttp.CreateEventRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/internalhttp.CreateEventResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "internalhttp.CreateEventRequest": {
+            "description": "Represents the request to create an event.",
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Discuss project roadmap"
+                },
+                "endTime": {
+                    "type": "integer",
+                    "example": 1717293600
+                },
+                "notifyBefore": {
+                    "type": "integer",
+                    "example": 600
+                },
+                "startTime": {
+                    "type": "integer",
+                    "example": 1717290000
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Team Meeting"
+                },
+                "userId": {
+                    "type": "string",
+                    "example": "id1234"
+                }
+            }
+        },
+        "internalhttp.CreateEventResponse": {
+            "description": "Represents a successful event creation response.",
+            "type": "object",
+            "properties": {
+                "event": {
+                    "$ref": "#/definitions/internalhttp.CreateEventRequest"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

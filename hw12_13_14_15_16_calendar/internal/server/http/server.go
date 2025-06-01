@@ -8,7 +8,10 @@ import (
 	"net/http"
 	"time"
 
+	// Импортируем сгенерированный пакет docs для регистрации Swagger.
+	_ "github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/server/http/docs"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/types"
+	httpSwagger "github.com/swaggo/http-swagger" //nolint: depguard
 )
 
 type Server struct {
@@ -57,6 +60,10 @@ func NewServer(app Application, logger Logger, cfg ServerConfig, handlers *Calen
 	mux.HandleFunc("/events/range", handlers.ListEventsByUserInRange)
 
 	mux.HandleFunc("/", handlers.helloHandler)
+
+	mux.HandleFunc("/swagger/", func(w http.ResponseWriter, r *http.Request) {
+		httpSwagger.Handler()(w, r)
+	})
 
 	return &Server{
 		logger: logger,

@@ -36,6 +36,17 @@ func (h *CalendarHandlers) helloHandler(w http.ResponseWriter, _ *http.Request) 
 	_, _ = w.Write([]byte("Hello, world!"))
 }
 
+// CreateEvent godoc
+// @Summary Create a new event
+// @Description Create a new calendar event
+// @Tags events
+// @Accept json
+// @Produce json
+// @Param event body CreateEventRequest true "Event data"
+// @Success 201 {object} CreateEventResponse
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /event/create [post].
 func (h *CalendarHandlers) CreateEvent(w http.ResponseWriter, r *http.Request) {
 	var req CreateEventRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

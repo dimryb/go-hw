@@ -41,4 +41,7 @@ generate:
 generate-mocks:
 	go generate ./...
 
+swagger:
+	swag init -g cmd/calendar/main.go -o internal/server/http/docs/
+
 .PHONY: build run build-img run-img version test lint generate generate-mocks

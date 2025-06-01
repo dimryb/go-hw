@@ -1,0 +1,74 @@
+basePath: /.
+definitions:
+  internalhttp.CreateEventRequest:
+    description: Represents the request to create an event.
+    properties:
+      description:
+        example: Discuss project roadmap
+        type: string
+      endTime:
+        example: 1717293600
+        type: integer
+      notifyBefore:
+        example: 600
+        type: integer
+      startTime:
+        example: 1717290000
+        type: integer
+      title:
+        example: Team Meeting
+        type: string
+      userId:
+        example: id1234
+        type: string
+    type: object
+  internalhttp.CreateEventResponse:
+    description: Represents a successful event creation response.
+    properties:
+      event:
+        $ref: '#/definitions/internalhttp.CreateEventRequest'
+      status:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: This is a server for Calendar
+  title: Receipt Hub API
+  version: "1.0"
+paths:
+  /event/create:
+    post:
+      consumes:
+      - application/json
+      description: Create a new calendar event
+      parameters:
+      - description: Event data
+        in: body
+        name: event
+        required: true
+        schema:
+          $ref: '#/definitions/internalhttp.CreateEventRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internalhttp.CreateEventResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a new event
+      tags:
+      - events
+swagger: "2.0"

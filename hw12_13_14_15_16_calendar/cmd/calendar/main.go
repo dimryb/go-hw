@@ -16,6 +16,11 @@ func init() {
 	flag.BoolVar(&migrate, "migrate", false, "Migrate DB")
 }
 
+// @title Receipt Hub API
+// @version 1.0
+// @description This is a server for Calendar
+// @host localhost:8080
+// @BasePath /.
 func main() {
 	flag.Parse()
 
