@@ -14,6 +14,7 @@ import (
 	internalhttp "github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/server/http"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage/common"
+	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/types"
 )
 
 type App struct {
@@ -116,6 +117,7 @@ func Run(configPath string, migrate bool) {
 	}
 }
 
-func (a *App) CreateEvent(_ context.Context, id, title string) error {
-	return a.storage.Create(storagecommon.Event{ID: id, Title: title})
+func (a *App) CreateEvent(_ context.Context, event types.Event) error {
+	storEvent := storagecommon.FromDomainEvent(event)
+	return a.storage.Create(storEvent)
 }

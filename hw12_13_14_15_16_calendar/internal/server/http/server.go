@@ -7,6 +7,8 @@ import (
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/types"
 )
 
 type Server struct {
@@ -25,7 +27,7 @@ type Logger interface {
 }
 
 type Application interface {
-	CreateEvent(context.Context, string, string) error
+	CreateEvent(context.Context, types.Event) error
 	// TODO
 }
 
