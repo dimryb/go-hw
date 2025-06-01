@@ -1,14 +1,27 @@
 package grpc
 
 import (
+	"context"
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/server/grpc/interceptors"
+	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/types"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/proto/calendar"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
+
+type Application interface {
+	CreateEvent(context.Context, types.Event) error
+	UpdateEvent(context.Context, types.Event) error
+	DeleteEvent(context.Context, string) error
+	GetEventByID(context.Context, string) (types.Event, error)
+	ListEvents(context.Context) ([]types.Event, error)
+	ListEventsByUser(context.Context, string) ([]types.Event, error)
+	ListEventsByUserInRange(context.Context, string, time.Time, time.Time) ([]types.Event, error)
+}
 
 type Logger interface {
 	Debugf(string, ...interface{})
@@ -19,20 +32,20 @@ type Logger interface {
 }
 
 type Server struct {
-	cfg     ServerConfig
-	log     Logger
-	storage Storage
+	app Application
+	cfg ServerConfig
+	log Logger
 }
 
 type ServerConfig struct {
 	Port string
 }
 
-func NewServer(cfg ServerConfig, log Logger, storage Storage) *Server {
+func NewServer(app Application, cfg ServerConfig, log Logger) *Server {
 	return &Server{
-		cfg:     cfg,
-		log:     log,
-		storage: storage,
+		app: app,
+		cfg: cfg,
+		log: log,
 	}
 }
 
@@ -45,7 +58,7 @@ func (s *Server) Run() error {
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(interceptors.UnaryLoggerInterceptor(s.log)),
 	)
-	calendar.RegisterCalendarServiceServer(grpcServer, NewCalendarService(s.storage))
+	calendar.RegisterCalendarServiceServer(grpcServer, NewCalendarService(s.app))
 
 	reflection.Register(grpcServer)
 

@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/mappers"
 	storagecommon "github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage/common"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/mocks"
 	pb "github.com/dimryb/go-hw/hw12_13_14_15_calendar/proto/calendar"
@@ -59,13 +60,13 @@ func TestCreateEvent(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			mockStorage := mocks.NewMockEventStorage(ctrl)
-			service := &CalendarService{storage: mockStorage}
+			mockApp := mocks.NewMockApplication(ctrl)
+			service := &CalendarService{app: mockApp}
 
-			domainEvent := service.protoToDomain(tt.event)
+			domainEvent := mappers.ProtoToDomain(tt.event)
 
-			mockStorage.EXPECT().
-				Create(domainEvent).
+			mockApp.EXPECT().
+				CreateEvent(gomock.Any(), domainEvent).
 				Return(tt.mockError)
 
 			resp, err := service.CreateEvent(context.Background(), tt.event)
@@ -123,13 +124,13 @@ func TestUpdateEvent(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			mockStorage := mocks.NewMockEventStorage(ctrl)
-			service := &CalendarService{storage: mockStorage}
+			mockApp := mocks.NewMockApplication(ctrl)
+			service := &CalendarService{app: mockApp}
 
-			domainEvent := service.protoToDomain(tt.event)
+			domainEvent := mappers.ProtoToDomain(tt.event)
 
-			mockStorage.EXPECT().
-				Update(domainEvent).
+			mockApp.EXPECT().
+				UpdateEvent(gomock.Any(), domainEvent).
 				Return(tt.mockError)
 
 			resp, err := service.UpdateEvent(context.Background(), tt.event)
@@ -170,11 +171,11 @@ func TestDeleteEvent(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			mockStorage := mocks.NewMockEventStorage(ctrl)
-			service := &CalendarService{storage: mockStorage}
+			mockApp := mocks.NewMockApplication(ctrl)
+			service := &CalendarService{app: mockApp}
 
-			mockStorage.EXPECT().
-				Delete(tt.id).
+			mockApp.EXPECT().
+				DeleteEvent(gomock.Any(), tt.id).
 				Return(tt.mockError)
 
 			req := &pb.DeleteEventRequest{Id: tt.id}
@@ -227,12 +228,14 @@ func TestGetEventByID(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			mockStorage := mocks.NewMockEventStorage(ctrl)
-			service := &CalendarService{storage: mockStorage}
+			mockApp := mocks.NewMockApplication(ctrl)
+			service := &CalendarService{app: mockApp}
 
-			mockStorage.EXPECT().
-				GetByID(tt.id).
-				Return(tt.mockEvent, tt.mockError)
+			domainEvent := mappers.ToDomainEvent(tt.mockEvent)
+
+			mockApp.EXPECT().
+				GetEventByID(gomock.Any(), tt.id).
+				Return(domainEvent, tt.mockError)
 
 			req := &pb.GetEventByIDRequest{Id: tt.id}
 			resp, err := service.GetEventByID(context.Background(), req)
@@ -298,12 +301,13 @@ func TestListEventsByUser(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			mockStorage := mocks.NewMockEventStorage(ctrl)
-			service := &CalendarService{storage: mockStorage}
+			mockApp := mocks.NewMockApplication(ctrl)
+			service := &CalendarService{app: mockApp}
+			domainEvents := mappers.ToDomainEvents(tt.mockEvents)
 
-			mockStorage.EXPECT().
-				ListByUser(tt.userID).
-				Return(tt.mockEvents, tt.mockError)
+			mockApp.EXPECT().
+				ListEventsByUser(gomock.Any(), tt.userID).
+				Return(domainEvents, tt.mockError)
 
 			req := &pb.ListEventsByUserRequest{UserId: tt.userID}
 			resp, err := service.ListEventsByUser(context.Background(), req)
@@ -379,12 +383,13 @@ func TestListEventsByUserInRange(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			mockStorage := mocks.NewMockEventStorage(ctrl)
-			service := &CalendarService{storage: mockStorage}
+			mockApp := mocks.NewMockApplication(ctrl)
+			service := &CalendarService{app: mockApp}
+			domainEvents := mappers.ToDomainEvents(tt.mockEvents)
 
-			mockStorage.EXPECT().
-				ListByUserInRange(tt.userID, time.Unix(tt.from, 0), time.Unix(tt.to, 0)).
-				Return(tt.mockEvents, tt.mockError)
+			mockApp.EXPECT().
+				ListEventsByUserInRange(gomock.Any(), tt.userID, time.Unix(tt.from, 0), time.Unix(tt.to, 0)).
+				Return(domainEvents, tt.mockError)
 
 			req := &pb.ListEventsByUserInRangeRequest{
 				UserId: tt.userID,
@@ -458,12 +463,13 @@ func TestListEvents(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			mockStorage := mocks.NewMockEventStorage(ctrl)
-			service := &CalendarService{storage: mockStorage}
+			mockApp := mocks.NewMockApplication(ctrl)
+			service := &CalendarService{app: mockApp}
+			domainEvents := mappers.ToDomainEvents(tt.mockEvents)
 
-			mockStorage.EXPECT().
-				List().
-				Return(tt.mockEvents, tt.mockError)
+			mockApp.EXPECT().
+				ListEvents(gomock.Any()).
+				Return(domainEvents, tt.mockError)
 
 			req := &pb.ListEventsRequest{}
 			resp, err := service.ListEvents(context.Background(), req)

@@ -3,9 +3,11 @@ package grpc
 import (
 	"context"
 	"errors"
+	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/mappers"
 	"time"
 
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage/common"
+	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/types"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/proto/calendar"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -19,47 +21,23 @@ var (
 )
 
 type Storage interface {
-	Create(event storagecommon.Event) error
-	GetByID(id string) (storagecommon.Event, error)
-	Update(event storagecommon.Event) error
+	Create(event types.Event) error
+	GetByID(id string) (types.Event, error)
+	Update(event types.Event) error
 	Delete(id string) error
-	List() ([]storagecommon.Event, error)
-	ListByUser(userID string) ([]storagecommon.Event, error)
-	ListByUserInRange(userID string, from, to time.Time) ([]storagecommon.Event, error)
+	List() ([]types.Event, error)
+	ListByUser(userID string) ([]types.Event, error)
+	ListByUserInRange(userID string, from, to time.Time) ([]types.Event, error)
 }
 
 type CalendarService struct {
 	calendar.UnimplementedCalendarServiceServer
-	storage Storage
+	app Application
 }
 
-func NewCalendarService(storage Storage) *CalendarService {
+func NewCalendarService(app Application) *CalendarService {
 	return &CalendarService{
-		storage: storage,
-	}
-}
-
-func (s *CalendarService) protoToDomain(event *calendar.Event) storagecommon.Event {
-	return storagecommon.Event{
-		ID:           event.Id,
-		UserID:       event.UserId,
-		Title:        event.Title,
-		Description:  event.Description,
-		StartTime:    time.Unix(event.StartTime, 0),
-		EndTime:      time.Unix(event.EndTime, 0),
-		NotifyBefore: int(event.NotifyBefore),
-	}
-}
-
-func (s *CalendarService) domainToProto(event storagecommon.Event) *calendar.Event {
-	return &calendar.Event{
-		Id:           event.ID,
-		UserId:       event.UserID,
-		Title:        event.Title,
-		Description:  event.Description,
-		StartTime:    event.StartTime.Unix(),
-		EndTime:      event.EndTime.Unix(),
-		NotifyBefore: int64(event.NotifyBefore),
+		app: app,
 	}
 }
 
@@ -77,11 +55,11 @@ func translateError(err error) error {
 }
 
 func (s *CalendarService) CreateEvent(
-	_ context.Context,
+	ctx context.Context,
 	event *calendar.Event,
 ) (*calendar.CreateEventResponse, error) {
-	domainEvent := s.protoToDomain(event)
-	if err := s.storage.Create(domainEvent); err != nil {
+	domainEvent := mappers.ProtoToDomain(event)
+	if err := s.app.CreateEvent(ctx, domainEvent); err != nil {
 		return nil, translateError(err)
 	}
 	return &calendar.CreateEventResponse{
@@ -91,82 +69,82 @@ func (s *CalendarService) CreateEvent(
 }
 
 func (s *CalendarService) UpdateEvent(
-	_ context.Context,
+	ctx context.Context,
 	event *calendar.Event,
 ) (*calendar.UpdateEventResponse, error) {
-	domainEvent := s.protoToDomain(event)
-	if err := s.storage.Update(domainEvent); err != nil {
+	domainEvent := mappers.ProtoToDomain(event)
+	if err := s.app.UpdateEvent(ctx, domainEvent); err != nil {
 		return nil, translateError(err)
 	}
 	return &calendar.UpdateEventResponse{Success: true}, nil
 }
 
 func (s *CalendarService) DeleteEvent(
-	_ context.Context,
+	ctx context.Context,
 	req *calendar.DeleteEventRequest,
 ) (*calendar.DeleteEventResponse, error) {
-	if err := s.storage.Delete(req.Id); err != nil {
+	if err := s.app.DeleteEvent(ctx, req.Id); err != nil {
 		return nil, translateError(err)
 	}
 	return &calendar.DeleteEventResponse{Success: true}, nil
 }
 
 func (s *CalendarService) GetEventByID(
-	_ context.Context,
+	ctx context.Context,
 	req *calendar.GetEventByIDRequest,
 ) (*calendar.GetEventByIDResponse, error) {
-	event, err := s.storage.GetByID(req.Id)
+	event, err := s.app.GetEventByID(ctx, req.Id)
 	if err != nil {
 		return nil, translateError(err)
 	}
 	return &calendar.GetEventByIDResponse{
-		Event: s.domainToProto(event),
+		Event: mappers.DomainToProto(event),
 	}, nil
 }
 
 func (s *CalendarService) ListEvents(
-	_ context.Context,
+	ctx context.Context,
 	_ *calendar.ListEventsRequest,
 ) (*calendar.ListEventsResponse, error) {
-	events, err := s.storage.List()
+	events, err := s.app.ListEvents(ctx)
 	if err != nil {
 		return nil, translateError(err)
 	}
 	protoEvents := make([]*calendar.Event, 0, len(events))
 	for _, e := range events {
-		protoEvents = append(protoEvents, s.domainToProto(e))
+		protoEvents = append(protoEvents, mappers.DomainToProto(e))
 	}
 	return &calendar.ListEventsResponse{Events: protoEvents}, nil
 }
 
 func (s *CalendarService) ListEventsByUser(
-	_ context.Context,
+	ctx context.Context,
 	req *calendar.ListEventsByUserRequest,
 ) (*calendar.ListEventsResponse, error) {
-	events, err := s.storage.ListByUser(req.UserId)
+	events, err := s.app.ListEventsByUser(ctx, req.UserId)
 	if err != nil {
 		return nil, translateError(err)
 	}
 	protoEvents := make([]*calendar.Event, 0, len(events))
 	for _, e := range events {
-		protoEvents = append(protoEvents, s.domainToProto(e))
+		protoEvents = append(protoEvents, mappers.DomainToProto(e))
 	}
 	return &calendar.ListEventsResponse{Events: protoEvents}, nil
 }
 
 func (s *CalendarService) ListEventsByUserInRange(
-	_ context.Context,
+	ctx context.Context,
 	req *calendar.ListEventsByUserInRangeRequest,
 ) (*calendar.ListEventsResponse, error) {
 	from := time.Unix(req.From, 0)
 	to := time.Unix(req.To, 0)
-	events, err := s.storage.ListByUserInRange(req.UserId, from, to)
+	events, err := s.app.ListEventsByUserInRange(ctx, req.UserId, from, to)
 	if err != nil {
 		return nil, translateError(err)
 	}
 	protoEvents := make([]*calendar.Event, 0, len(events))
 	for _, e := range events {
-		protoEvents = append(protoEvents, s.domainToProto(e))
+		protoEvents = append(protoEvents, mappers.DomainToProto(e))
 	}
 	return &calendar.ListEventsResponse{Events: protoEvents}, nil
 }

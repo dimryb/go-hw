@@ -28,7 +28,12 @@ type Logger interface {
 
 type Application interface {
 	CreateEvent(context.Context, types.Event) error
-	// TODO
+	UpdateEvent(context.Context, types.Event) error
+	DeleteEvent(context.Context, string) error
+	GetEventByID(context.Context, string) (types.Event, error)
+	ListEvents(context.Context) ([]types.Event, error)
+	ListEventsByUser(context.Context, string) ([]types.Event, error)
+	ListEventsByUserInRange(context.Context, string, time.Time, time.Time) ([]types.Event, error)
 }
 
 type ServerConfig struct {

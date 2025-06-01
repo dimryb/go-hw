@@ -10,12 +10,24 @@ import (
 
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/config"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/logger"
+	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/mappers"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/server/grpc"
 	internalhttp "github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/server/http"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage/common"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/types"
 )
+
+//go:generate mockgen -source=app.go -package=mocks -destination=../../mocks/mock_application.go
+type Application interface {
+	CreateEvent(context.Context, types.Event) error
+	UpdateEvent(context.Context, types.Event) error
+	DeleteEvent(context.Context, string) error
+	GetEventByID(context.Context, string) (types.Event, error)
+	ListEvents(context.Context) ([]types.Event, error)
+	ListEventsByUser(context.Context, string) ([]types.Event, error)
+	ListEventsByUserInRange(context.Context, string, time.Time, time.Time) ([]types.Event, error)
+}
 
 type App struct {
 	logger  Logger
@@ -81,11 +93,11 @@ func Run(configPath string, migrate bool) {
 		go func() {
 			logg.Debugf("gRPC server starting..")
 			grpcServer := grpc.NewServer(
+				calendar,
 				grpc.ServerConfig{
 					Port: cfg.GRPC.Port,
 				},
 				logg,
-				storageApp,
 			)
 			if err := grpcServer.Run(); err != nil {
 				logg.Fatalf("Failed to start gRPC server: %s", err.Error())
@@ -118,6 +130,69 @@ func Run(configPath string, migrate bool) {
 }
 
 func (a *App) CreateEvent(_ context.Context, event types.Event) error {
-	storEvent := storagecommon.FromDomainEvent(event)
+	storEvent := mappers.FromDomainEvent(event)
 	return a.storage.Create(storEvent)
+}
+
+func (a *App) UpdateEvent(_ context.Context, event types.Event) error {
+	storEvent := mappers.FromDomainEvent(event)
+	return a.storage.Update(storEvent)
+}
+
+func (a *App) DeleteEvent(_ context.Context, id string) error {
+	return a.storage.Delete(id)
+}
+
+func (a *App) GetEventByID(_ context.Context, id string) (types.Event, error) {
+	storEvent, err := a.storage.GetByID(id)
+	if err != nil {
+		return types.Event{}, err
+	}
+	return mappers.ToDomainEvent(storEvent), nil
+}
+
+func (a *App) ListEvents(_ context.Context) ([]types.Event, error) {
+	storEvents, err := a.storage.List()
+	if err != nil {
+		return nil, err
+	}
+
+	domainEvents := make([]types.Event, 0, len(storEvents))
+	for _, storEvent := range storEvents {
+		domainEvents = append(domainEvents, mappers.ToDomainEvent(storEvent))
+	}
+
+	return domainEvents, nil
+}
+
+func (a *App) ListEventsByUser(_ context.Context, userID string) ([]types.Event, error) {
+	storEvents, err := a.storage.ListByUser(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	domainEvents := make([]types.Event, 0, len(storEvents))
+	for _, storEvent := range storEvents {
+		domainEvents = append(domainEvents, mappers.ToDomainEvent(storEvent))
+	}
+
+	return domainEvents, nil
+}
+
+func (a *App) ListEventsByUserInRange(
+	_ context.Context,
+	userID string,
+	from, to time.Time,
+) ([]types.Event, error) {
+	storEvents, err := a.storage.ListByUserInRange(userID, from, to)
+	if err != nil {
+		return nil, err
+	}
+
+	domainEvents := make([]types.Event, 0, len(storEvents))
+	for _, storEvent := range storEvents {
+		domainEvents = append(domainEvents, mappers.ToDomainEvent(storEvent))
+	}
+
+	return domainEvents, nil
 }
