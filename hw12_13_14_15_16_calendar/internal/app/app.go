@@ -80,14 +80,18 @@ func Run(configPath string, migrate bool) {
 		storage: storageApp,
 	}
 
-	server := internalhttp.NewServer(logg, calendar, internalhttp.ServerConfig{
+	handlers := internalhttp.NewCalendarHandlers(calendar, logg)
+
+	server := internalhttp.NewServer(calendar, logg, internalhttp.ServerConfig{
 		Host:              cfg.HTTP.Host,
 		Port:              cfg.HTTP.Port,
 		ReadTimeout:       cfg.HTTP.ReadTimeout,
 		WriteTimeout:      cfg.HTTP.WriteTimeout,
 		IdleTimeout:       cfg.HTTP.IdleTimeout,
 		ReadHeaderTimeout: cfg.HTTP.ReadHeaderTimeout,
-	})
+	},
+		handlers,
+	)
 
 	if cfg.GRPC.Enable {
 		go func() {

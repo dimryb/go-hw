@@ -12,8 +12,8 @@ import (
 )
 
 type Server struct {
-	logger Logger
 	app    Application
+	logger Logger
 	server *http.Server
 	cfg    ServerConfig
 }
@@ -45,13 +45,24 @@ type ServerConfig struct {
 	ReadHeaderTimeout time.Duration
 }
 
-func NewServer(logger Logger, app Application, cfg ServerConfig) *Server {
+func NewServer(app Application, logger Logger, cfg ServerConfig, handlers *CalendarHandlers) *Server {
 	mux := http.NewServeMux()
-	srv := &Server{
+
+	mux.HandleFunc("/event/create", handlers.CreateEvent)
+	mux.HandleFunc("/event/update", handlers.UpdateEvent)
+	mux.HandleFunc("/event/delete", handlers.DeleteEvent)
+	mux.HandleFunc("/event/get", handlers.GetEventByID)
+	mux.HandleFunc("/events/list", handlers.ListEvents)
+	mux.HandleFunc("/events/user", handlers.ListEventsByUser)
+	mux.HandleFunc("/events/range", handlers.ListEventsByUserInRange)
+
+	mux.HandleFunc("/", handlers.helloHandler)
+
+	return &Server{
 		logger: logger,
 		app:    app,
 		server: &http.Server{
-			Handler:           mux,
+			Handler:           loggingMiddleware(handlers.logger)(mux),
 			ReadTimeout:       cfg.ReadTimeout,
 			WriteTimeout:      cfg.WriteTimeout,
 			IdleTimeout:       cfg.IdleTimeout,
@@ -59,9 +70,6 @@ func NewServer(logger Logger, app Application, cfg ServerConfig) *Server {
 		},
 		cfg: cfg,
 	}
-
-	mux.Handle("/", loggingMiddleware(logger)(http.HandlerFunc(srv.helloHandler)))
-	return srv
 }
 
 func (s *Server) Start(_ context.Context) error {
@@ -80,9 +88,4 @@ func (s *Server) Start(_ context.Context) error {
 func (s *Server) Stop(ctx context.Context) error {
 	s.logger.Infof("Stopping HTTP server")
 	return s.server.Shutdown(ctx)
-}
-
-func (s *Server) helloHandler(w http.ResponseWriter, _ *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte("Hello, world!"))
 }
