@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/config"
-	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/grpc"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/logger"
+	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/server/grpc"
 	internalhttp "github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/server/http"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage/common"

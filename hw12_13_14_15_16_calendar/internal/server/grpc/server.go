@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/grpc/interceptors"
+	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/server/grpc/interceptors"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/proto/calendar"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
