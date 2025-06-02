@@ -75,37 +75,43 @@ func (s *Storage) Migrate() error {
 	return nil
 }
 
-func (s *Storage) Create(event storagecommon.Event) error {
-	_, err := s.GetByID(event.ID)
-	if err == nil {
-		return storagecommon.ErrAlreadyExists
+func (s *Storage) Create(event storagecommon.Event) (string, error) {
+	duplicate, err := s.isDuplicate(event)
+	if err != nil {
+		return "", err
 	}
-
-	if !errors.Is(err, storagecommon.ErrEventNotFound) {
-		return fmt.Errorf("checking existing event: %w", err)
+	if duplicate {
+		return "", storagecommon.ErrAlreadyExists
 	}
 
 	overlap, err := s.isOverlapping(event)
 	if err != nil {
-		return fmt.Errorf("checking overlapping events: %w", err)
+		return "", fmt.Errorf("checking overlapping events: %w", err)
 	}
 	if overlap {
-		return storagecommon.ErrConflictOverlap
+		return "", storagecommon.ErrConflictOverlap
 	}
 
-	_, err = s.db.NamedExec(`
-        INSERT INTO events (
-            id, title, start_time, end_time, description, user_id, notify_before
-        ) VALUES (
-            :id, :title, :start_time, :end_time, :description, :user_id, :notify_before
-        )
-    `,
-		event,
-	)
+	const query = `
+	   INSERT INTO events (
+	       user_id, title, start_time, end_time, description, notify_before
+	   ) VALUES (
+	       :user_id, :title, :start_time, :end_time, :description, :notify_before
+	   )
+	   RETURNING id`
+
+	var newID string
+	namedQuery, err := s.db.PrepareNamed(query)
 	if err != nil {
-		return fmt.Errorf("failed to create event: %w", err)
+		return "", fmt.Errorf("failed to prepare named query: %w", err)
 	}
-	return nil
+
+	err = namedQuery.Get(&newID, event)
+	if err != nil {
+		return "", fmt.Errorf("failed to create event: %w", err)
+	}
+
+	return newID, nil
 }
 
 func (s *Storage) Update(event storagecommon.Event) error {
@@ -163,6 +169,10 @@ func (s *Storage) Delete(id string) error {
 }
 
 func (s *Storage) GetByID(id string) (storagecommon.Event, error) {
+	if id == "" {
+		return storagecommon.Event{}, storagecommon.ErrEventNotFound
+	}
+
 	var event storagecommon.Event
 	err := s.db.Get(&event, "SELECT * FROM events WHERE id = $1", id)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -195,22 +205,65 @@ func (s *Storage) ListByUserInRange(userID string, from, to time.Time) ([]storag
 }
 
 func (s *Storage) isOverlapping(event storagecommon.Event) (bool, error) {
+	var err error
+	var exists bool
+	if event.ID == "" {
+		query := `
+            SELECT EXISTS (
+                SELECT 1 FROM events 
+                WHERE user_id = $1
+                  AND end_time > $2
+                  AND start_time < $3
+            )`
+		err = s.db.Get(&exists, query,
+			event.UserID,
+			event.StartTime,
+			event.EndTime,
+		)
+	} else {
+		query := `
+            SELECT EXISTS (
+                SELECT 1 FROM events 
+                WHERE user_id = $1
+                  AND end_time > $2
+                  AND start_time < $3
+                  AND id != $4
+            )`
+		err = s.db.Get(&exists, query,
+			event.UserID,
+			event.StartTime,
+			event.EndTime,
+			event.ID,
+		)
+	}
+	if err != nil {
+		return false, err
+	}
+
+	return exists, nil
+}
+
+func (s *Storage) isDuplicate(event storagecommon.Event) (bool, error) {
 	const query = `
         SELECT EXISTS (
-            SELECT 1 FROM events 
-            WHERE user_id = $1 AND id != $2
-            AND end_time > $3 AND start_time < $4
+            SELECT 1 FROM events
+            WHERE user_id = :user_id
+              AND title = :title
+              AND start_time = :start_time
+              AND end_time = :end_time
+              AND description = :description
+              AND notify_before = :notify_before
         )`
 
 	var exists bool
-	err := s.db.Get(&exists, query,
-		event.UserID,
-		event.ID,
-		event.StartTime,
-		event.EndTime,
-	)
+	namedQuery, err := s.db.PrepareNamed(query)
 	if err != nil {
 		return false, err
+	}
+
+	err = namedQuery.Get(&exists, event)
+	if err != nil {
+		return false, fmt.Errorf("failed to check duplicate: %w", err)
 	}
 
 	return exists, nil

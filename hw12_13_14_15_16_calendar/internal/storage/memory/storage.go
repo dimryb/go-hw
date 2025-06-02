@@ -18,22 +18,22 @@ func New() *Storage {
 	}
 }
 
-func (s *Storage) Create(event storagecommon.Event) error {
+func (s *Storage) Create(event storagecommon.Event) (string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if _, exists := s.events[event.ID]; exists {
-		return storagecommon.ErrAlreadyExists
+		return "", storagecommon.ErrAlreadyExists
 	}
 
 	for _, e := range s.events {
 		if e.UserID == event.UserID && isOverlapping(e, event) {
-			return storagecommon.ErrConflictOverlap
+			return "", storagecommon.ErrConflictOverlap
 		}
 	}
 
 	s.events[event.ID] = event
-	return nil
+	return event.ID, nil
 }
 
 func (s *Storage) GetByID(id string) (storagecommon.Event, error) {

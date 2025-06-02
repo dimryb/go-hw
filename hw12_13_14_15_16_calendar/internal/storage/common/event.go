@@ -11,3 +11,12 @@ type Event struct {
 	UserID       string    `db:"user_id"`
 	NotifyBefore int       `db:"notify_before"`
 }
+
+func (e Event) With(fn func(Event) Event) Event {
+	return fn(e)
+}
+
+func (e Event) WithID(id string) Event {
+	e.ID = id
+	return e
+}

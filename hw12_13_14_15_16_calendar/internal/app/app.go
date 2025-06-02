@@ -43,7 +43,7 @@ type Logger interface {
 }
 
 type Storage interface {
-	Create(event storagecommon.Event) error
+	Create(event storagecommon.Event) (string, error)
 	Update(event storagecommon.Event) error
 	Delete(id string) error
 
@@ -135,7 +135,8 @@ func Run(configPath string, migrate bool) {
 
 func (a *App) CreateEvent(_ context.Context, event types.Event) error {
 	storEvent := mappers.FromDomainEvent(event)
-	return a.storage.Create(storEvent)
+	_, err := a.storage.Create(storEvent)
+	return err
 }
 
 func (a *App) UpdateEvent(_ context.Context, event types.Event) error {
