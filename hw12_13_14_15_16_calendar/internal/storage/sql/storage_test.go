@@ -626,11 +626,9 @@ func TestStorage_ListByUserInRange(t *testing.T) {
 			initDB(t, storageDB)
 			defer teardownDB(t, storageDB)
 
-			var createdIDs []string
 			for _, e := range events {
-				id, err := storageDB.Create(e)
+				_, err := storageDB.Create(e)
 				require.NoError(t, err)
-				createdIDs = append(createdIDs, id)
 			}
 
 			list, err := storageDB.ListByUserInRange(tt.userID, tt.from, tt.to)
