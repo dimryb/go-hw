@@ -19,7 +19,7 @@ definitions:
         example: Team Meeting
         type: string
       userId:
-        example: id1234
+        example: 12345678-1234-1234-1234-12345678abcd
         type: string
     type: object
   internalhttp.CreateEventResponse:
@@ -28,6 +28,56 @@ definitions:
       event:
         $ref: '#/definitions/internalhttp.CreateEventRequest'
       status:
+        type: string
+    type: object
+  internalhttp.EventResponse:
+    description: Represents an event returned by the API.
+    properties:
+      description:
+        type: string
+      endTime:
+        type: integer
+      id:
+        type: string
+      notifyBefore:
+        type: integer
+      startTime:
+        type: integer
+      title:
+        type: string
+      userId:
+        type: string
+    type: object
+  internalhttp.ListEventsResponse:
+    properties:
+      events:
+        items:
+          $ref: '#/definitions/internalhttp.EventResponse'
+        type: array
+    type: object
+  internalhttp.UpdateEventRequest:
+    description: Represents the request to update an existing event.
+    properties:
+      description:
+        example: Updated description
+        type: string
+      endTime:
+        example: 1717293600
+        type: integer
+      id:
+        example: 12345678-1234-1234-1234-12345678abcd
+        type: string
+      notifyBefore:
+        example: 700
+        type: integer
+      startTime:
+        example: 1717290000
+        type: integer
+      title:
+        example: Team Meeting Updated
+        type: string
+      userId:
+        example: id1234
         type: string
     type: object
 host: localhost:8080
@@ -69,6 +119,216 @@ paths:
               type: string
             type: object
       summary: Create a new event
+      tags:
+      - events
+  /event/delete:
+    delete:
+      description: Delete an event by ID
+      parameters:
+      - description: Event ID
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete an event
+      tags:
+      - events
+  /event/get:
+    get:
+      description: Retrieve an event from the database by its ID
+      parameters:
+      - description: Event ID
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internalhttp.EventResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get event by ID
+      tags:
+      - events
+  /event/update:
+    post:
+      consumes:
+      - application/json
+      description: Update an event by its ID
+      parameters:
+      - description: Updated event data
+        in: body
+        name: event
+        required: true
+        schema:
+          $ref: '#/definitions/internalhttp.UpdateEventRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update an existing event
+      tags:
+      - events
+  /events/list:
+    get:
+      description: Retrieve a list of all events
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internalhttp.ListEventsResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get all events
+      tags:
+      - events
+  /events/range:
+    get:
+      description: Retrieve a list of events for a specific user within a given time
+        range
+      parameters:
+      - description: User ID
+        in: query
+        name: userId
+        required: true
+        type: string
+      - description: Start time (Unix timestamp)
+        in: query
+        name: from
+        required: true
+        type: integer
+      - description: End time (Unix timestamp)
+        in: query
+        name: to
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internalhttp.ListEventsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get events for a user in time range
+      tags:
+      - events
+  /events/user:
+    get:
+      description: Retrieve a list of events for a specific user
+      parameters:
+      - description: User ID
+        in: query
+        name: userId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internalhttp.ListEventsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get events by user
       tags:
       - events
 swagger: "2.0"

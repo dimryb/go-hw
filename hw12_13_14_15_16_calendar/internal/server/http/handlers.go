@@ -92,6 +92,18 @@ func (h *CalendarHandlers) CreateEvent(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// UpdateEvent godoc
+// @Summary      Update an existing event
+// @Description  Update an event by its ID
+// @Tags         events
+// @Accept       json
+// @Produce      json
+// @Param        event body UpdateEventRequest true "Updated event data"
+// @Success      200 {object} map[string]string
+// @Failure      400 {object} map[string]string
+// @Failure      404 {object} map[string]string
+// @Failure      500 {object} map[string]string
+// @Router       /event/update [post].
 func (h *CalendarHandlers) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 	var req UpdateEventRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -129,6 +141,17 @@ func (h *CalendarHandlers) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// DeleteEvent godoc
+// @Summary      Delete an event
+// @Description  Delete an event by ID
+// @Tags         events
+// @Produce      json
+// @Param        id   query string true "Event ID"
+// @Success      200  {object} map[string]string
+// @Failure      400  {object} map[string]string
+// @Failure      404  {object} map[string]string
+// @Failure      500  {object} map[string]string
+// @Router       /event/delete [delete].
 func (h *CalendarHandlers) DeleteEvent(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 	if id == "" {
@@ -149,6 +172,17 @@ func (h *CalendarHandlers) DeleteEvent(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// GetEventByID godoc
+// @Summary      Get event by ID
+// @Description  Retrieve an event from the database by its ID
+// @Tags         events
+// @Produce      json
+// @Param        id   query string true "Event ID"
+// @Success      200  {object} EventResponse
+// @Failure      400  {object} map[string]string
+// @Failure      404  {object} map[string]string
+// @Failure      500  {object} map[string]string
+// @Router       /event/get [get].
 func (h *CalendarHandlers) GetEventByID(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 	if id == "" {
@@ -171,6 +205,14 @@ func (h *CalendarHandlers) GetEventByID(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
+// ListEvents godoc
+// @Summary      Get all events
+// @Description  Retrieve a list of all events
+// @Tags         events
+// @Produce      json
+// @Success      200 {object} ListEventsResponse
+// @Failure      500 {object} map[string]string
+// @Router       /events/list [get].
 func (h *CalendarHandlers) ListEvents(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	events, err := h.app.ListEvents(ctx)
@@ -191,6 +233,16 @@ func (h *CalendarHandlers) ListEvents(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// ListEventsByUser godoc
+// @Summary      Get events by user
+// @Description  Retrieve a list of events for a specific user
+// @Tags         events
+// @Produce      json
+// @Param        userId   query string true "User ID"
+// @Success      200 {object} ListEventsResponse
+// @Failure      400 {object} map[string]string
+// @Failure      500 {object} map[string]string
+// @Router       /events/user [get].
 func (h *CalendarHandlers) ListEventsByUser(w http.ResponseWriter, r *http.Request) {
 	userID := r.URL.Query().Get("userId")
 	if userID == "" {
@@ -217,6 +269,18 @@ func (h *CalendarHandlers) ListEventsByUser(w http.ResponseWriter, r *http.Reque
 	}
 }
 
+// ListEventsByUserInRange godoc
+// @Summary      Get events for a user in time range
+// @Description  Retrieve a list of events for a specific user within a given time range
+// @Tags         events
+// @Produce      json
+// @Param        userId   query string true "User ID"
+// @Param        from     query integer true "Start time (Unix timestamp)"
+// @Param        to       query integer true "End time (Unix timestamp)"
+// @Success      200 {object} ListEventsResponse
+// @Failure      400 {object} map[string]string
+// @Failure      500 {object} map[string]string
+// @Router       /events/range [get].
 func (h *CalendarHandlers) ListEventsByUserInRange(w http.ResponseWriter, r *http.Request) {
 	userID := r.URL.Query().Get("userId")
 	fromStr := r.URL.Query().Get("from")

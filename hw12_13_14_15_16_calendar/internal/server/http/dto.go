@@ -3,7 +3,7 @@ package internalhttp
 // CreateEventRequest represents the request to create an event.
 // @Description Represents the request to create an event.
 type CreateEventRequest struct {
-	UserID       string `json:"userId" example:"id1234"`
+	UserID       string `json:"userId" example:"12345678-1234-1234-1234-12345678abcd"`
 	Title        string `json:"title" example:"Team Meeting"`
 	Description  string `json:"description" example:"Discuss project roadmap"`
 	StartTime    int64  `json:"startTime" example:"1717290000"`
@@ -14,7 +14,7 @@ type CreateEventRequest struct {
 // UpdateEventRequest represents the request to update an existing event.
 // @Description Represents the request to update an existing event.
 type UpdateEventRequest struct {
-	ID           string `json:"id" example:"event5678"`
+	ID           string `json:"id" example:"12345678-1234-1234-1234-12345678abcd"`
 	UserID       string `json:"userId" example:"id1234"`
 	Title        string `json:"title" example:"Team Meeting Updated"`
 	Description  string `json:"description" example:"Updated description"`
