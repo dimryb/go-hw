@@ -50,7 +50,7 @@ func TestCreateEvent(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "created", response.Status)
-	// TODO: assert.NotEmpty(t, response.Id)
+	assert.NotEmpty(t, response.ID)
 
 	list, err := testApp.Storage.List()
 	require.NoError(t, err)

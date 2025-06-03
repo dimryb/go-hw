@@ -43,6 +43,13 @@ type ListEventsResponse struct {
 // @Description Represents a successful event creation response.
 type CreateEventResponse struct {
 	Status string             `json:"status"`
-	ID     string             `json:"id"`
+	ID     string             `json:"id,omitempty"`
 	Event  CreateEventRequest `json:"event"`
+}
+
+// UpdateEventResponse represents a successful event update response.
+// @Description Represents a successful event update response.
+type UpdateEventResponse struct {
+	Status string `json:"status"`
+	ID     string `json:"id"`
 }

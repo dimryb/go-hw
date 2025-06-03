@@ -117,26 +117,18 @@ func (h *CalendarHandlers) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	event := types.Event{
-		ID:           req.ID,
-		UserID:       req.UserID,
-		Title:        req.Title,
-		Description:  req.Description,
-		StartTime:    time.Unix(req.StartTime, 0),
-		EndTime:      time.Unix(req.EndTime, 0),
-		NotifyBefore: int(req.NotifyBefore),
-	}
+	event := FromUpdateEventRequest(req)
 
 	ctx := r.Context()
-
 	if err := h.app.UpdateEvent(ctx, event); err != nil {
 		h.logger.Errorf("Failed to update event: %v", err)
 		http.Error(w, fmt.Sprintf("Failed to update event: %v", err), http.StatusInternalServerError)
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(map[string]string{"status": "updated"}); err != nil {
+	if err := json.NewEncoder(w).Encode(map[string]string{"status": "updated", "id": event.ID}); err != nil {
 		h.logger.Errorf("Failed to encode response: %v", err)
 	}
 }
