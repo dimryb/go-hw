@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"strconv"
 	"time"
-
-	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/types"
 )
 
 type CalendarHandlers struct {
@@ -17,18 +15,6 @@ type CalendarHandlers struct {
 
 func NewCalendarHandlers(app Application, logger Logger) *CalendarHandlers {
 	return &CalendarHandlers{app, logger}
-}
-
-func toEventResponse(event types.Event) EventResponse {
-	return EventResponse{
-		ID:           event.ID,
-		UserID:       event.UserID,
-		Title:        event.Title,
-		Description:  event.Description,
-		StartTime:    event.StartTime.Unix(),
-		EndTime:      event.EndTime.Unix(),
-		NotifyBefore: int64(event.NotifyBefore),
-	}
 }
 
 func (h *CalendarHandlers) helloHandler(w http.ResponseWriter, _ *http.Request) {
@@ -158,8 +144,11 @@ func (h *CalendarHandlers) DeleteEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	response := map[string]string{"status": "deleted"}
+
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(map[string]string{"status": "deleted"}); err != nil {
+	if err := json.NewEncoder(w).Encode(response); err != nil {
 		h.logger.Errorf("Failed to encode response: %v", err)
 	}
 }
@@ -190,7 +179,9 @@ func (h *CalendarHandlers) GetEventByID(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	resp := toEventResponse(event)
+	resp := ToEventResponse(event)
+
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
 		h.logger.Errorf("Failed to encode response: %v", err)
@@ -216,7 +207,7 @@ func (h *CalendarHandlers) ListEvents(w http.ResponseWriter, r *http.Request) {
 
 	response := ListEventsResponse{}
 	for _, e := range events {
-		response.Events = append(response.Events, toEventResponse(e))
+		response.Events = append(response.Events, ToEventResponse(e))
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -252,7 +243,7 @@ func (h *CalendarHandlers) ListEventsByUser(w http.ResponseWriter, r *http.Reque
 
 	response := ListEventsResponse{}
 	for _, e := range events {
-		response.Events = append(response.Events, toEventResponse(e))
+		response.Events = append(response.Events, ToEventResponse(e))
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -307,7 +298,7 @@ func (h *CalendarHandlers) ListEventsByUserInRange(w http.ResponseWriter, r *htt
 
 	response := ListEventsResponse{}
 	for _, e := range events {
-		response.Events = append(response.Events, toEventResponse(e))
+		response.Events = append(response.Events, ToEventResponse(e))
 	}
 
 	w.WriteHeader(http.StatusOK)
