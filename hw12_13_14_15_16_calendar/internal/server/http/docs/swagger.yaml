@@ -1,4 +1,4 @@
-basePath: /.
+basePath: /
 definitions:
   internalhttp.CreateEventRequest:
     description: Represents the request to create an event.
@@ -19,7 +19,7 @@ definitions:
         example: Team Meeting
         type: string
       userId:
-        example: 12345678-1234-1234-1234-12345678abcd
+        example: id1234
         type: string
     type: object
   internalhttp.CreateEventResponse:
@@ -27,6 +27,8 @@ definitions:
     properties:
       event:
         $ref: '#/definitions/internalhttp.CreateEventRequest'
+      id:
+        type: string
       status:
         type: string
     type: object

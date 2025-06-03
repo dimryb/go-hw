@@ -412,7 +412,7 @@ const docTemplate = `{
                 },
                 "userId": {
                     "type": "string",
-                    "example": "12345678-1234-1234-1234-12345678abcd"
+                    "example": "id1234"
                 }
             }
         },
@@ -422,6 +422,9 @@ const docTemplate = `{
             "properties": {
                 "event": {
                     "$ref": "#/definitions/internalhttp.CreateEventRequest"
+                },
+                "id": {
+                    "type": "string"
                 },
                 "status": {
                     "type": "string"
@@ -507,7 +510,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "localhost:8080",
-	BasePath:         "/.",
+	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "Receipt Hub API",
 	Description:      "This is a server for Calendar",

@@ -43,14 +43,14 @@ func TestCreateEvent(t *testing.T) {
 	testApp.Server.Handler().ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusCreated, w.Code)
-	// TODO: assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
 
 	var response internalhttp.CreateEventResponse
 	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
 
 	assert.Equal(t, "created", response.Status)
-	// TODO: assert.NotEmpty(t, response.Event.ID)
+	// TODO: assert.NotEmpty(t, response.Id)
 
 	list, err := testApp.Storage.List()
 	require.NoError(t, err)

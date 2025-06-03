@@ -20,7 +20,8 @@ func init() {
 // @version 1.0
 // @description This is a server for Calendar
 // @host localhost:8080
-// @BasePath /.
+// @BasePath /
+// .
 func main() {
 	flag.Parse()
 

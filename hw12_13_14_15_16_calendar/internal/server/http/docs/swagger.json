@@ -7,7 +7,7 @@
         "version": "1.0"
     },
     "host": "localhost:8080",
-    "basePath": "/.",
+    "basePath": "/",
     "paths": {
         "/event/create": {
             "post": {
@@ -405,7 +405,7 @@
                 },
                 "userId": {
                     "type": "string",
-                    "example": "12345678-1234-1234-1234-12345678abcd"
+                    "example": "id1234"
                 }
             }
         },
@@ -415,6 +415,9 @@
             "properties": {
                 "event": {
                     "$ref": "#/definitions/internalhttp.CreateEventRequest"
+                },
+                "id": {
+                    "type": "string"
                 },
                 "status": {
                     "type": "string"

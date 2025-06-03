@@ -70,14 +70,7 @@ func (h *CalendarHandlers) CreateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	event := types.Event{
-		UserID:       req.UserID,
-		Title:        req.Title,
-		Description:  req.Description,
-		StartTime:    time.Unix(req.StartTime, 0),
-		EndTime:      time.Unix(req.EndTime, 0),
-		NotifyBefore: int(req.NotifyBefore),
-	}
+	event := FromCreateEventRequest(req)
 
 	ctx := r.Context()
 
@@ -86,8 +79,15 @@ func (h *CalendarHandlers) CreateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	response := CreateEventResponse{
+		Status: "created",
+		ID:     "",
+		Event:  ToCreateEventRequest(event),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	if err := json.NewEncoder(w).Encode(map[string]string{"status": "created"}); err != nil {
+	if err := json.NewEncoder(w).Encode(response); err != nil {
 		h.logger.Errorf("Failed to encode response: %v", err)
 	}
 }
