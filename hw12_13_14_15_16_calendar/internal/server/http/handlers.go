@@ -210,6 +210,7 @@ func (h *CalendarHandlers) ListEvents(w http.ResponseWriter, r *http.Request) {
 		response.Events = append(response.Events, ToEventResponse(e))
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		h.logger.Errorf("Failed to encode response: %v", err)
