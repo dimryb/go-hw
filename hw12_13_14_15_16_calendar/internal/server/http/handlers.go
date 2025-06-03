@@ -247,6 +247,7 @@ func (h *CalendarHandlers) ListEventsByUser(w http.ResponseWriter, r *http.Reque
 		response.Events = append(response.Events, ToEventResponse(e))
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		h.logger.Errorf("Failed to encode response: %v", err)
@@ -302,6 +303,7 @@ func (h *CalendarHandlers) ListEventsByUserInRange(w http.ResponseWriter, r *htt
 		response.Events = append(response.Events, ToEventResponse(e))
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		h.logger.Errorf("Failed to encode response: %v", err)
