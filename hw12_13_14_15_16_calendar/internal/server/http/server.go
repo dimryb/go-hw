@@ -96,3 +96,7 @@ func (s *Server) Stop(ctx context.Context) error {
 	s.logger.Infof("Stopping HTTP server")
 	return s.server.Shutdown(ctx)
 }
+
+func (s *Server) Handler() http.Handler {
+	return s.server.Handler
+}

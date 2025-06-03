@@ -30,8 +30,8 @@ type Application interface {
 }
 
 type App struct {
-	logger  Logger
-	storage Storage
+	Logger  Logger
+	Storage Storage
 }
 
 type Logger interface {
@@ -76,8 +76,8 @@ func Run(configPath string, migrate bool) {
 	}
 
 	calendar := &App{
-		logger:  logg,
-		storage: storageApp,
+		Logger:  logg,
+		Storage: storageApp,
 	}
 
 	handlers := internalhttp.NewCalendarHandlers(calendar, logg)
@@ -135,21 +135,21 @@ func Run(configPath string, migrate bool) {
 
 func (a *App) CreateEvent(_ context.Context, event types.Event) error {
 	storEvent := mappers.FromDomainEvent(event)
-	_, err := a.storage.Create(storEvent)
+	_, err := a.Storage.Create(storEvent)
 	return err
 }
 
 func (a *App) UpdateEvent(_ context.Context, event types.Event) error {
 	storEvent := mappers.FromDomainEvent(event)
-	return a.storage.Update(storEvent)
+	return a.Storage.Update(storEvent)
 }
 
 func (a *App) DeleteEvent(_ context.Context, id string) error {
-	return a.storage.Delete(id)
+	return a.Storage.Delete(id)
 }
 
 func (a *App) GetEventByID(_ context.Context, id string) (types.Event, error) {
-	storEvent, err := a.storage.GetByID(id)
+	storEvent, err := a.Storage.GetByID(id)
 	if err != nil {
 		return types.Event{}, err
 	}
@@ -157,7 +157,7 @@ func (a *App) GetEventByID(_ context.Context, id string) (types.Event, error) {
 }
 
 func (a *App) ListEvents(_ context.Context) ([]types.Event, error) {
-	storEvents, err := a.storage.List()
+	storEvents, err := a.Storage.List()
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +171,7 @@ func (a *App) ListEvents(_ context.Context) ([]types.Event, error) {
 }
 
 func (a *App) ListEventsByUser(_ context.Context, userID string) ([]types.Event, error) {
-	storEvents, err := a.storage.ListByUser(userID)
+	storEvents, err := a.Storage.ListByUser(userID)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +189,7 @@ func (a *App) ListEventsByUserInRange(
 	userID string,
 	from, to time.Time,
 ) ([]types.Event, error) {
-	storEvents, err := a.storage.ListByUserInRange(userID, from, to)
+	storEvents, err := a.Storage.ListByUserInRange(userID, from, to)
 	if err != nil {
 		return nil, err
 	}
