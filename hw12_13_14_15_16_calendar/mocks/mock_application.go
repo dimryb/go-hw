@@ -38,11 +38,12 @@ func (m *MockApplication) EXPECT() *MockApplicationMockRecorder {
 }
 
 // CreateEvent mocks base method.
-func (m *MockApplication) CreateEvent(arg0 context.Context, arg1 types.Event) error {
+func (m *MockApplication) CreateEvent(arg0 context.Context, arg1 types.Event) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateEvent", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // CreateEvent indicates an expected call of CreateEvent.
@@ -271,11 +272,12 @@ func (m *MockStorage) EXPECT() *MockStorageMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockStorage) Create(event storagecommon.Event) error {
+func (m *MockStorage) Create(event storagecommon.Event) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", event)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.

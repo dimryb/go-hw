@@ -67,7 +67,7 @@ func TestCreateEvent(t *testing.T) {
 
 			mockApp.EXPECT().
 				CreateEvent(gomock.Any(), domainEvent).
-				Return(tt.mockError)
+				Return(tt.expectID, tt.mockError)
 
 			resp, err := service.CreateEvent(context.Background(), tt.event)
 
