@@ -73,15 +73,15 @@ func (h *CalendarHandlers) CreateEvent(w http.ResponseWriter, r *http.Request) {
 	event := FromCreateEventRequest(req)
 
 	ctx := r.Context()
-
-	if err := h.app.CreateEvent(ctx, event); err != nil {
+	id, err := h.app.CreateEvent(ctx, event)
+	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to create event: %v", err), http.StatusInternalServerError)
 		return
 	}
 
 	response := CreateEventResponse{
 		Status: "created",
-		ID:     "",
+		ID:     id,
 		Event:  ToCreateEventRequest(event),
 	}
 

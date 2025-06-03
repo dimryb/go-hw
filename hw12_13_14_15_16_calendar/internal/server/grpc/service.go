@@ -59,11 +59,12 @@ func (s *CalendarService) CreateEvent(
 	event *calendar.Event,
 ) (*calendar.CreateEventResponse, error) {
 	domainEvent := mappers.ProtoToDomain(event)
-	if err := s.app.CreateEvent(ctx, domainEvent); err != nil {
+	id, err := s.app.CreateEvent(ctx, domainEvent)
+	if err != nil {
 		return nil, translateError(err)
 	}
 	return &calendar.CreateEventResponse{
-		Id:      domainEvent.ID,
+		Id:      id,
 		Success: true,
 	}, nil
 }

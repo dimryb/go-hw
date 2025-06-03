@@ -14,7 +14,7 @@ import (
 )
 
 type Application interface {
-	CreateEvent(context.Context, types.Event) error
+	CreateEvent(context.Context, types.Event) (string, error)
 	UpdateEvent(context.Context, types.Event) error
 	DeleteEvent(context.Context, string) error
 	GetEventByID(context.Context, string) (types.Event, error)

@@ -20,7 +20,7 @@ import (
 
 //go:generate mockgen -source=app.go -package=mocks -destination=../../mocks/mock_application.go
 type Application interface {
-	CreateEvent(context.Context, types.Event) error
+	CreateEvent(context.Context, types.Event) (string, error)
 	UpdateEvent(context.Context, types.Event) error
 	DeleteEvent(context.Context, string) error
 	GetEventByID(context.Context, string) (types.Event, error)
@@ -133,10 +133,10 @@ func Run(configPath string, migrate bool) {
 	}
 }
 
-func (a *App) CreateEvent(_ context.Context, event types.Event) error {
+func (a *App) CreateEvent(_ context.Context, event types.Event) (string, error) {
 	storEvent := mappers.FromDomainEvent(event)
-	_, err := a.Storage.Create(storEvent)
-	return err
+	id, err := a.Storage.Create(storEvent)
+	return id, err
 }
 
 func (a *App) UpdateEvent(_ context.Context, event types.Event) error {
