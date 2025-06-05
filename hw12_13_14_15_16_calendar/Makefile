@@ -48,4 +48,4 @@ rabbit:
 	# http://localhost:15672 guest:guest
 	docker run -d --name rabbitmq -p 15672:15672 -p 5672:5672 rabbitmq:3-management
 
-.PHONY: build run build-img run-img version test lint generate generate-mocks
+.PHONY: build run build-img run-img version test lint generate generate-mocks swagger rabbit
