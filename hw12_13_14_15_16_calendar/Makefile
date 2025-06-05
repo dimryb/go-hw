@@ -44,4 +44,8 @@ generate-mocks:
 swagger:
 	swag init -g cmd/calendar/main.go -o internal/server/http/docs/
 
+rabbit:
+	# http://localhost:15672 guest:guest
+	docker run -d --name rabbitmq -p 15672:15672 -p 5672:5672 rabbitmq:3-management
+
 .PHONY: build run build-img run-img version test lint generate generate-mocks
