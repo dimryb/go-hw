@@ -1,6 +1,8 @@
 -- +goose Up
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 CREATE TABLE IF NOT EXISTS events (
-                                      id VARCHAR PRIMARY KEY,
+                                      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
                                       title TEXT NOT NULL,
                                       start_time TIMESTAMPTZ NOT NULL,
                                       end_time TIMESTAMPTZ NOT NULL,

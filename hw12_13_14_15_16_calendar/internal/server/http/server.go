@@ -7,26 +7,36 @@ import (
 	"net"
 	"net/http"
 	"time"
+
+	// Импортируем сгенерированный пакет docs для регистрации Swagger.
+	_ "github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/server/http/docs"
+	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/types"
+	httpSwagger "github.com/swaggo/http-swagger" //nolint: depguard
 )
 
 type Server struct {
-	logger Logger
 	app    Application
+	logger Logger
 	server *http.Server
 	cfg    ServerConfig
 }
 
 type Logger interface {
-	Debug(string)
-	Info(string)
-	Warn(string)
-	Error(string)
-	Fatal(string)
+	Debugf(string, ...interface{})
+	Infof(string, ...interface{})
+	Warnf(string, ...interface{})
+	Errorf(string, ...interface{})
+	Fatalf(string, ...interface{})
 }
 
 type Application interface {
-	CreateEvent(context.Context, string, string) error
-	// TODO
+	CreateEvent(context.Context, types.Event) (string, error)
+	UpdateEvent(context.Context, types.Event) error
+	DeleteEvent(context.Context, string) error
+	GetEventByID(context.Context, string) (types.Event, error)
+	ListEvents(context.Context) ([]types.Event, error)
+	ListEventsByUser(context.Context, string) ([]types.Event, error)
+	ListEventsByUserInRange(context.Context, string, time.Time, time.Time) ([]types.Event, error)
 }
 
 type ServerConfig struct {
@@ -38,13 +48,28 @@ type ServerConfig struct {
 	ReadHeaderTimeout time.Duration
 }
 
-func NewServer(logger Logger, app Application, cfg ServerConfig) *Server {
+func NewServer(app Application, logger Logger, cfg ServerConfig, handlers *CalendarHandlers) *Server {
 	mux := http.NewServeMux()
-	srv := &Server{
+
+	mux.HandleFunc("/event/create", handlers.CreateEvent)
+	mux.HandleFunc("/event/update", handlers.UpdateEvent)
+	mux.HandleFunc("/event/delete", handlers.DeleteEvent)
+	mux.HandleFunc("/event/get", handlers.GetEventByID)
+	mux.HandleFunc("/events/list", handlers.ListEvents)
+	mux.HandleFunc("/events/user", handlers.ListEventsByUser)
+	mux.HandleFunc("/events/range", handlers.ListEventsByUserInRange)
+
+	mux.HandleFunc("/", handlers.helloHandler)
+
+	mux.HandleFunc("/swagger/", func(w http.ResponseWriter, r *http.Request) {
+		httpSwagger.Handler()(w, r)
+	})
+
+	return &Server{
 		logger: logger,
 		app:    app,
 		server: &http.Server{
-			Handler:           mux,
+			Handler:           loggingMiddleware(handlers.logger)(mux),
 			ReadTimeout:       cfg.ReadTimeout,
 			WriteTimeout:      cfg.WriteTimeout,
 			IdleTimeout:       cfg.IdleTimeout,
@@ -52,30 +77,26 @@ func NewServer(logger Logger, app Application, cfg ServerConfig) *Server {
 		},
 		cfg: cfg,
 	}
-
-	mux.Handle("/", loggingMiddleware(logger)(http.HandlerFunc(srv.helloHandler)))
-	return srv
 }
 
 func (s *Server) Start(_ context.Context) error {
 	addr := net.JoinHostPort(s.cfg.Host, s.cfg.Port)
 	s.server.Addr = addr
 
-	s.logger.Info(fmt.Sprintf("Starting HTTP server on %s", addr))
+	s.logger.Infof(fmt.Sprintf("Starting HTTP server on %s", addr))
 	err := s.server.ListenAndServe()
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
-		s.logger.Error("Failed to start HTTP server: " + err.Error())
+		s.logger.Errorf("Failed to start HTTP server: " + err.Error())
 		return err
 	}
 	return nil
 }
 
 func (s *Server) Stop(ctx context.Context) error {
-	s.logger.Info("Stopping HTTP server")
+	s.logger.Infof("Stopping HTTP server")
 	return s.server.Shutdown(ctx)
 }
 
-func (s *Server) helloHandler(w http.ResponseWriter, _ *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte("Hello, world!"))
+func (s *Server) Handler() http.Handler {
+	return s.server.Handler
 }
