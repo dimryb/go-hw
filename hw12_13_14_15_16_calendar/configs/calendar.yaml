@@ -12,7 +12,7 @@ log:
 database:
   type: postgres
   dsn: "postgresql://postgres@localhost:5432/calendar_test?sslmode=disable"
-  migrations: "migrations1"
+  migrations: "migrations"
   timeout: "10s"
 
 grpc:

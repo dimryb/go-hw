@@ -54,7 +54,7 @@ type Storage interface {
 }
 
 func Run(configPath string, migrate bool) {
-	cfg, err := config.NewConfig(configPath)
+	cfg, err := config.NewCalendarConfig(configPath)
 	if err != nil {
 		log.Fatalf("Config error: %s", err)
 	}
