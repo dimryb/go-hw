@@ -5,7 +5,7 @@ import (
 )
 
 type (
-	Config struct {
+	CalendarConfig struct {
 		HTTP     `yaml:"http"`
 		Log      `yaml:"log"`
 		Database `yaml:"database"`
@@ -38,8 +38,8 @@ type (
 	}
 )
 
-func NewCalendarConfig(configPath string) (*Config, error) {
-	cfg := &Config{}
+func NewCalendarConfig(configPath string) (*CalendarConfig, error) {
+	cfg := &CalendarConfig{}
 	err := Load(configPath, cfg)
 	return cfg, err
 }
