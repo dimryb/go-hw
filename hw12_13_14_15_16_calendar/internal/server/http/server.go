@@ -8,35 +8,17 @@ import (
 	"net/http"
 	"time"
 
+	i "github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/interface"
 	// Импортируем сгенерированный пакет docs для регистрации Swagger.
 	_ "github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/server/http/docs"
-	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/types"
 	httpSwagger "github.com/swaggo/http-swagger" //nolint: depguard
 )
 
 type Server struct {
-	app    Application
-	logger Logger
+	app    i.Application
+	logger i.Logger
 	server *http.Server
 	cfg    ServerConfig
-}
-
-type Logger interface {
-	Debugf(string, ...interface{})
-	Infof(string, ...interface{})
-	Warnf(string, ...interface{})
-	Errorf(string, ...interface{})
-	Fatalf(string, ...interface{})
-}
-
-type Application interface {
-	CreateEvent(context.Context, types.Event) (string, error)
-	UpdateEvent(context.Context, types.Event) error
-	DeleteEvent(context.Context, string) error
-	GetEventByID(context.Context, string) (types.Event, error)
-	ListEvents(context.Context) ([]types.Event, error)
-	ListEventsByUser(context.Context, string) ([]types.Event, error)
-	ListEventsByUserInRange(context.Context, string, time.Time, time.Time) ([]types.Event, error)
 }
 
 type ServerConfig struct {
@@ -48,7 +30,7 @@ type ServerConfig struct {
 	ReadHeaderTimeout time.Duration
 }
 
-func NewServer(app Application, logger Logger, cfg ServerConfig, handlers *CalendarHandlers) *Server {
+func NewServer(app i.Application, logger i.Logger, cfg ServerConfig, handlers *CalendarHandlers) *Server {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/event/create", handlers.CreateEvent)
