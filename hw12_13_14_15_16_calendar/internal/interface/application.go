@@ -7,7 +7,7 @@ import (
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/types"
 )
 
-//go:generate mockgen -source=app.go -package=mocks -destination=../../mocks/mock_application.go
+//go:generate mockgen -source=application.go -package=mocks -destination=../../mocks/mock_application.go
 type Application interface {
 	CreateEvent(context.Context, types.Event) (string, error)
 	UpdateEvent(context.Context, types.Event) error
