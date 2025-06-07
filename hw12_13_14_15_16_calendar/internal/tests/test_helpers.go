@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/app"
+	i "github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/interface"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/logger"
 	internalhttp "github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/server/http"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage"
@@ -15,7 +16,7 @@ type TestAppForCalendar struct {
 	App     *app.App
 	Server  *internalhttp.Server
 	Storage storagecommon.EventStorage
-	Logger  internalhttp.Logger
+	Logger  i.Logger
 }
 
 func NewTestAppForCalendar() *TestAppForCalendar {
