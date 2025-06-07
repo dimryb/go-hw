@@ -4,9 +4,10 @@ import "time"
 
 type (
 	SchedulerConfig struct {
-		RabbitMQ          `yaml:"rabbitmq"`
-		SchedulerDatabase `yaml:"database"`
-		Scheduler         `yaml:"scheduler"`
+		RabbitMQ  `yaml:"rabbitmq"`
+		Database  `yaml:"database"`
+		Scheduler `yaml:"scheduler"`
+		Log       `yaml:"log"`
 	}
 
 	RabbitMQ struct {
@@ -17,15 +18,9 @@ type (
 		Exchange string `yaml:"exchange"`
 	}
 
-	SchedulerDatabase struct {
-		Type    string        `yaml:"type"`
-		DSN     string        `yaml:"dsn"`
-		Timeout time.Duration `yaml:"timeout"`
-	}
-
 	Scheduler struct {
 		Interval        time.Duration `yaml:"interval"`
-		RetentionPeriod time.Duration `yaml:"retention_period"`
+		RetentionPeriod time.Duration `yaml:"retentionPeriod"`
 	}
 )
 

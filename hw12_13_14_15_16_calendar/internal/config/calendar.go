@@ -21,17 +21,6 @@ type (
 		ReadHeaderTimeout time.Duration `yaml:"readHeaderTimeout"`
 	}
 
-	Log struct {
-		Level string `yaml:"level" env:"LOG_LEVEL"`
-	}
-
-	Database struct {
-		Type           string        `yaml:"type"`
-		DSN            string        `yaml:"dsn"`
-		MigrationsPath string        `yaml:"migrations" env:"MIGRATIONS_PATH"`
-		Timeout        time.Duration `yaml:"timeout"`
-	}
-
 	GRPC struct {
 		Enable bool   `yaml:"enable"`
 		Port   string `yaml:"port" env:"GRPC_PORT"`
