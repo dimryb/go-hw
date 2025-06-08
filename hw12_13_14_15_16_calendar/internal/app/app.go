@@ -14,8 +14,11 @@ type App struct {
 	Storage i.Storage
 }
 
-func NewApp(storage i.Storage) i.Application {
-	return &App{Storage: storage}
+func NewApp(storage i.Storage, logger i.Logger) i.Application {
+	return &App{
+		Storage: storage,
+		Logger:  logger,
+	}
 }
 
 func (a *App) CreateEvent(_ context.Context, event types.Event) (string, error) {

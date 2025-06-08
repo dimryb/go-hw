@@ -50,8 +50,8 @@ func run(configPath string, migrate bool) {
 
 	logg := logger.New(cfg.Log.Level)
 
-	var storageImpl i.Storage
-	storageImpl, err = storage.InitStorage(storage.Config{
+	var storageApp i.Storage
+	storageApp, err = storage.InitStorage(storage.Config{
 		Type:           cfg.Database.Type,
 		DSN:            cfg.Database.DSN,
 		MigrationsPath: cfg.Database.MigrationsPath,
@@ -62,8 +62,8 @@ func run(configPath string, migrate bool) {
 		logg.Fatalf("Failed to initialize storage: %v", err)
 	}
 
-	appl := app.NewApp(storageImpl)
-	calendarService := service.NewCalendar(appl, logg, cfg)
+	application := app.NewApp(storageApp, logg)
+	calendarService := service.NewCalendar(application, logg, cfg)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)

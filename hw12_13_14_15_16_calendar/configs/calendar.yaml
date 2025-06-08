@@ -11,7 +11,7 @@ log:
 
 database:
   type: postgres
-  dsn: "postgresql://postgres@localhost:5432/calendar_test?sslmode=disable"
+  dsn: "postgresql://postgres@localhost:5432/calendar?sslmode=disable"
   migrations: "migrations"
   timeout: "10s"
 
