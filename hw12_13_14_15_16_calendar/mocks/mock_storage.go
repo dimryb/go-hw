@@ -12,31 +12,31 @@ import (
 	gomock "github.com/golang/mock/gomock"
 )
 
-// MockEventStorage is a mock of EventStorage interface.
-type MockEventStorage struct {
+// MockStorage is a mock of Storage interface.
+type MockStorage struct {
 	ctrl     *gomock.Controller
-	recorder *MockEventStorageMockRecorder
+	recorder *MockStorageMockRecorder
 }
 
-// MockEventStorageMockRecorder is the mock recorder for MockEventStorage.
-type MockEventStorageMockRecorder struct {
-	mock *MockEventStorage
+// MockStorageMockRecorder is the mock recorder for MockStorage.
+type MockStorageMockRecorder struct {
+	mock *MockStorage
 }
 
-// NewMockEventStorage creates a new mock instance.
-func NewMockEventStorage(ctrl *gomock.Controller) *MockEventStorage {
-	mock := &MockEventStorage{ctrl: ctrl}
-	mock.recorder = &MockEventStorageMockRecorder{mock}
+// NewMockStorage creates a new mock instance.
+func NewMockStorage(ctrl *gomock.Controller) *MockStorage {
+	mock := &MockStorage{ctrl: ctrl}
+	mock.recorder = &MockStorageMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockEventStorage) EXPECT() *MockEventStorageMockRecorder {
+func (m *MockStorage) EXPECT() *MockStorageMockRecorder {
 	return m.recorder
 }
 
 // Create mocks base method.
-func (m *MockEventStorage) Create(event storagecommon.Event) (string, error) {
+func (m *MockStorage) Create(event storagecommon.Event) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", event)
 	ret0, _ := ret[0].(string)
@@ -45,13 +45,13 @@ func (m *MockEventStorage) Create(event storagecommon.Event) (string, error) {
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockEventStorageMockRecorder) Create(event interface{}) *gomock.Call {
+func (mr *MockStorageMockRecorder) Create(event interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockEventStorage)(nil).Create), event)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockStorage)(nil).Create), event)
 }
 
 // Delete mocks base method.
-func (m *MockEventStorage) Delete(id string) error {
+func (m *MockStorage) Delete(id string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", id)
 	ret0, _ := ret[0].(error)
@@ -59,13 +59,27 @@ func (m *MockEventStorage) Delete(id string) error {
 }
 
 // Delete indicates an expected call of Delete.
-func (mr *MockEventStorageMockRecorder) Delete(id interface{}) *gomock.Call {
+func (mr *MockStorageMockRecorder) Delete(id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockEventStorage)(nil).Delete), id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockStorage)(nil).Delete), id)
+}
+
+// DeleteOlder mocks base method.
+func (m *MockStorage) DeleteOlder(t time.Time) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteOlder", t)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteOlder indicates an expected call of DeleteOlder.
+func (mr *MockStorageMockRecorder) DeleteOlder(t interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOlder", reflect.TypeOf((*MockStorage)(nil).DeleteOlder), t)
 }
 
 // GetByID mocks base method.
-func (m *MockEventStorage) GetByID(id string) (storagecommon.Event, error) {
+func (m *MockStorage) GetByID(id string) (storagecommon.Event, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByID", id)
 	ret0, _ := ret[0].(storagecommon.Event)
@@ -74,13 +88,13 @@ func (m *MockEventStorage) GetByID(id string) (storagecommon.Event, error) {
 }
 
 // GetByID indicates an expected call of GetByID.
-func (mr *MockEventStorageMockRecorder) GetByID(id interface{}) *gomock.Call {
+func (mr *MockStorageMockRecorder) GetByID(id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockEventStorage)(nil).GetByID), id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockStorage)(nil).GetByID), id)
 }
 
 // List mocks base method.
-func (m *MockEventStorage) List() ([]storagecommon.Event, error) {
+func (m *MockStorage) List() ([]storagecommon.Event, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "List")
 	ret0, _ := ret[0].([]storagecommon.Event)
@@ -89,13 +103,13 @@ func (m *MockEventStorage) List() ([]storagecommon.Event, error) {
 }
 
 // List indicates an expected call of List.
-func (mr *MockEventStorageMockRecorder) List() *gomock.Call {
+func (mr *MockStorageMockRecorder) List() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockEventStorage)(nil).List))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockStorage)(nil).List))
 }
 
 // ListByUser mocks base method.
-func (m *MockEventStorage) ListByUser(userID string) ([]storagecommon.Event, error) {
+func (m *MockStorage) ListByUser(userID string) ([]storagecommon.Event, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListByUser", userID)
 	ret0, _ := ret[0].([]storagecommon.Event)
@@ -104,13 +118,13 @@ func (m *MockEventStorage) ListByUser(userID string) ([]storagecommon.Event, err
 }
 
 // ListByUser indicates an expected call of ListByUser.
-func (mr *MockEventStorageMockRecorder) ListByUser(userID interface{}) *gomock.Call {
+func (mr *MockStorageMockRecorder) ListByUser(userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByUser", reflect.TypeOf((*MockEventStorage)(nil).ListByUser), userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByUser", reflect.TypeOf((*MockStorage)(nil).ListByUser), userID)
 }
 
 // ListByUserInRange mocks base method.
-func (m *MockEventStorage) ListByUserInRange(userID string, from, to time.Time) ([]storagecommon.Event, error) {
+func (m *MockStorage) ListByUserInRange(userID string, from, to time.Time) ([]storagecommon.Event, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListByUserInRange", userID, from, to)
 	ret0, _ := ret[0].([]storagecommon.Event)
@@ -119,13 +133,13 @@ func (m *MockEventStorage) ListByUserInRange(userID string, from, to time.Time) 
 }
 
 // ListByUserInRange indicates an expected call of ListByUserInRange.
-func (mr *MockEventStorageMockRecorder) ListByUserInRange(userID, from, to interface{}) *gomock.Call {
+func (mr *MockStorageMockRecorder) ListByUserInRange(userID, from, to interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByUserInRange", reflect.TypeOf((*MockEventStorage)(nil).ListByUserInRange), userID, from, to)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByUserInRange", reflect.TypeOf((*MockStorage)(nil).ListByUserInRange), userID, from, to)
 }
 
 // Update mocks base method.
-func (m *MockEventStorage) Update(event storagecommon.Event) error {
+func (m *MockStorage) Update(event storagecommon.Event) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Update", event)
 	ret0, _ := ret[0].(error)
@@ -133,7 +147,7 @@ func (m *MockEventStorage) Update(event storagecommon.Event) error {
 }
 
 // Update indicates an expected call of Update.
-func (mr *MockEventStorageMockRecorder) Update(event interface{}) *gomock.Call {
+func (mr *MockStorageMockRecorder) Update(event interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockEventStorage)(nil).Update), event)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockStorage)(nil).Update), event)
 }

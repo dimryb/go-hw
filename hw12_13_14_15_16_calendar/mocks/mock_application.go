@@ -65,6 +65,20 @@ func (mr *MockApplicationMockRecorder) DeleteEvent(arg0, arg1 interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEvent", reflect.TypeOf((*MockApplication)(nil).DeleteEvent), arg0, arg1)
 }
 
+// DeleteOlderThan mocks base method.
+func (m *MockApplication) DeleteOlderThan(arg0 context.Context, arg1 time.Time) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteOlderThan", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteOlderThan indicates an expected call of DeleteOlderThan.
+func (mr *MockApplicationMockRecorder) DeleteOlderThan(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOlderThan", reflect.TypeOf((*MockApplication)(nil).DeleteOlderThan), arg0, arg1)
+}
+
 // GetEventByID mocks base method.
 func (m *MockApplication) GetEventByID(arg0 context.Context, arg1 string) (types.Event, error) {
 	m.ctrl.T.Helper()
@@ -123,21 +137,6 @@ func (m *MockApplication) ListEventsByUserInRange(arg0 context.Context, arg1 str
 func (mr *MockApplicationMockRecorder) ListEventsByUserInRange(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEventsByUserInRange", reflect.TypeOf((*MockApplication)(nil).ListEventsByUserInRange), arg0, arg1, arg2, arg3)
-}
-
-// ListEventsDueBefore mocks base method.
-func (m *MockApplication) ListEventsDueBefore(arg0 context.Context, before time.Time) ([]types.Event, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListEventsDueBefore", arg0, before)
-	ret0, _ := ret[0].([]types.Event)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListEventsDueBefore indicates an expected call of ListEventsDueBefore.
-func (mr *MockApplicationMockRecorder) ListEventsDueBefore(arg0, before interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEventsDueBefore", reflect.TypeOf((*MockApplication)(nil).ListEventsDueBefore), arg0, before)
 }
 
 // UpdateEvent mocks base method.
