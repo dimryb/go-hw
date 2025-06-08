@@ -13,7 +13,7 @@ import (
 	i "github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/interface"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/logger"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/rmq"
-	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/service"
+	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/service/scheduler"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage"
 )
 
@@ -67,7 +67,7 @@ func run(configPath string) {
 	}
 
 	application := app.NewApp(storageApp, logg)
-	schedulerService := service.NewScheduler(application, rmqClient, logg, cfg.Scheduler.Interval)
+	schedulerService := scheduler.NewScheduler(application, rmqClient, logg, cfg)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
@@ -75,7 +75,10 @@ func run(configPath string) {
 
 	go func() {
 		<-ctx.Done()
-		logg.Infof("Shutting down...")
+		logg.Infof("Shutting down scheduler...")
+		if err = rmqClient.Close(); err != nil {
+			logg.Errorf("Failed to close RMQ client: %v", err)
+		}
 		cancel()
 	}()
 

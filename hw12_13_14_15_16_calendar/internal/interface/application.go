@@ -16,6 +16,5 @@ type Application interface {
 	ListEvents(context.Context) ([]types.Event, error)
 	ListEventsByUser(context.Context, string) ([]types.Event, error)
 	ListEventsByUserInRange(context.Context, string, time.Time, time.Time) ([]types.Event, error)
-
-	ListEventsDueBefore(_ context.Context, before time.Time) ([]types.Event, error)
+	DeleteOlderThan(context.Context, time.Time) error
 }

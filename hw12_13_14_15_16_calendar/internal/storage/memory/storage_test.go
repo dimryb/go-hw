@@ -1,10 +1,13 @@
 package memorystorage
 
 import (
+	"sort"
 	"testing"
 	"time"
 
+	i "github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/interface"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage/common"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,13 +26,13 @@ func TestStorage_Create(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   storagecommon.Event
-		setup   func() storagecommon.EventStorage
+		setup   func() i.Storage
 		wantErr error
 	}{
 		{
 			name:  "success create new event",
 			input: event,
-			setup: func() storagecommon.EventStorage {
+			setup: func() i.Storage {
 				return New()
 			},
 			wantErr: nil,
@@ -37,7 +40,7 @@ func TestStorage_Create(t *testing.T) {
 		{
 			name:  "fail event already exists",
 			input: event,
-			setup: func() storagecommon.EventStorage {
+			setup: func() i.Storage {
 				s := New()
 				_, _ = s.Create(event)
 				return s
@@ -53,7 +56,7 @@ func TestStorage_Create(t *testing.T) {
 				EndTime:   now.Add(time.Hour + 30*time.Minute),
 				UserID:    "user1",
 			},
-			setup: func() storagecommon.EventStorage {
+			setup: func() i.Storage {
 				s := New()
 				_, _ = s.Create(event)
 				return s
@@ -69,7 +72,7 @@ func TestStorage_Create(t *testing.T) {
 				EndTime:   now.Add(time.Hour + 30*time.Minute),
 				UserID:    "user2",
 			},
-			setup: func() storagecommon.EventStorage {
+			setup: func() i.Storage {
 				s := New()
 				_, _ = s.Create(event)
 				return s
@@ -111,13 +114,13 @@ func TestStorage_Update(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   storagecommon.Event
-		setup   func() storagecommon.EventStorage
+		setup   func() i.Storage
 		wantErr error
 	}{
 		{
 			name:  "success update event",
 			input: baseEvent,
-			setup: func() storagecommon.EventStorage {
+			setup: func() i.Storage {
 				s := New()
 				_, _ = s.Create(baseEvent)
 				updated := baseEvent
@@ -138,7 +141,7 @@ func TestStorage_Update(t *testing.T) {
 				EndTime:   now.Add(time.Hour),
 				UserID:    "user1",
 			},
-			setup: func() storagecommon.EventStorage {
+			setup: func() i.Storage {
 				s := New()
 				_, _ = s.Create(baseEvent)
 				return s
@@ -154,7 +157,7 @@ func TestStorage_Update(t *testing.T) {
 				EndTime:   now.Add(time.Hour + 30*time.Minute),
 				UserID:    "user1",
 			},
-			setup: func() storagecommon.EventStorage {
+			setup: func() i.Storage {
 				s := New()
 				_, _ = s.Create(baseEvent)
 				_, _ = s.Create(storagecommon.Event{
@@ -177,7 +180,7 @@ func TestStorage_Update(t *testing.T) {
 				EndTime:   now.Add(time.Hour + 30*time.Minute),
 				UserID:    "user1",
 			},
-			setup: func() storagecommon.EventStorage {
+			setup: func() i.Storage {
 				s := New()
 				_, _ = s.Create(baseEvent)
 				_, _ = s.Create(storagecommon.Event{
@@ -226,13 +229,13 @@ func TestStorage_Delete(t *testing.T) {
 	tests := []struct {
 		name    string
 		inputID string
-		setup   func() storagecommon.EventStorage
+		setup   func() i.Storage
 		wantErr error
 	}{
 		{
 			name:    "success delete existing event",
 			inputID: "1",
-			setup: func() storagecommon.EventStorage {
+			setup: func() i.Storage {
 				s := New()
 				_, _ = s.Create(event)
 				return s
@@ -242,7 +245,7 @@ func TestStorage_Delete(t *testing.T) {
 		{
 			name:    "fail delete nonexistent event",
 			inputID: "2",
-			setup: func() storagecommon.EventStorage {
+			setup: func() i.Storage {
 				s := New()
 				_, _ = s.Create(event)
 				return s
@@ -264,6 +267,110 @@ func TestStorage_Delete(t *testing.T) {
 				_, err := s.GetByID(tt.inputID)
 				require.ErrorIs(t, err, storagecommon.ErrEventNotFound)
 			}
+		})
+	}
+}
+
+func TestStorage_DeleteOlder(t *testing.T) {
+	now := time.Now()
+
+	tests := []struct {
+		name        string
+		cutoffTime  time.Time
+		setupEvents []storagecommon.Event
+		expectedIDs []string
+	}{
+		{
+			name:       "delete past events",
+			cutoffTime: now,
+			setupEvents: []storagecommon.Event{
+				{
+					ID:          "1",
+					Title:       "Past Event",
+					StartTime:   now.Add(-2 * time.Hour),
+					EndTime:     now.Add(-1 * time.Hour),
+					Description: "Should be deleted",
+					UserID:      "user1",
+				},
+				{
+					ID:          "2",
+					Title:       "Future Event",
+					StartTime:   now.Add(1 * time.Hour),
+					EndTime:     now.Add(2 * time.Hour),
+					Description: "Should stay",
+					UserID:      "user1",
+				},
+			},
+			expectedIDs: []string{"2"},
+		},
+		{
+			name:       "no deletion if all events are newer",
+			cutoffTime: now.Add(-1 * time.Hour), // на час раньше
+			setupEvents: []storagecommon.Event{
+				{
+					ID:          "3",
+					Title:       "Event A",
+					StartTime:   now,
+					EndTime:     now.Add(1 * time.Hour),
+					Description: "Should stay",
+					UserID:      "user1",
+				},
+				{
+					ID:          "4",
+					Title:       "Event B",
+					StartTime:   now.Add(2 * time.Hour),
+					EndTime:     now.Add(3 * time.Hour),
+					Description: "Should stay",
+					UserID:      "user1",
+				},
+			},
+			expectedIDs: []string{"3", "4"},
+		},
+		{
+			name:       "all events should be deleted",
+			cutoffTime: now.Add(1 * time.Hour),
+			setupEvents: []storagecommon.Event{
+				{
+					ID:          "5",
+					Title:       "Event A",
+					StartTime:   now.Add(-3 * time.Hour),
+					EndTime:     now.Add(-2 * time.Hour),
+					Description: "Deleted",
+					UserID:      "user1",
+				},
+				{
+					ID:          "6",
+					Title:       "Event B",
+					StartTime:   now.Add(-1 * time.Hour),
+					EndTime:     now.Add(-30 * time.Minute),
+					Description: "Deleted",
+					UserID:      "user1",
+				},
+			},
+			expectedIDs: []string{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := New()
+
+			for _, event := range tt.setupEvents {
+				_, _ = s.Create(event)
+			}
+
+			err := s.DeleteOlder(tt.cutoffTime)
+			require.NoError(t, err)
+
+			actualIDs := make([]string, 0)
+			for id := range s.events {
+				actualIDs = append(actualIDs, id)
+			}
+
+			sort.Strings(actualIDs)
+			sort.Strings(tt.expectedIDs)
+
+			assert.Equal(t, tt.expectedIDs, actualIDs)
 		})
 	}
 }
@@ -290,12 +397,12 @@ func TestStorage_List(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		setup   func() storagecommon.EventStorage
+		setup   func() i.Storage
 		wantLen int
 	}{
 		{
 			name: "list with events",
-			setup: func() storagecommon.EventStorage {
+			setup: func() i.Storage {
 				s := New()
 				for _, e := range events {
 					_, _ = s.Create(e)
@@ -306,7 +413,7 @@ func TestStorage_List(t *testing.T) {
 		},
 		{
 			name: "empty list",
-			setup: func() storagecommon.EventStorage {
+			setup: func() i.Storage {
 				return New()
 			},
 			wantLen: 0,
@@ -353,13 +460,13 @@ func TestStorage_ListByUser(t *testing.T) {
 	tests := []struct {
 		name      string
 		userID    string
-		setup     func() storagecommon.EventStorage
+		setup     func() i.Storage
 		wantCount int
 	}{
 		{
 			name:   "list user1 events",
 			userID: "user1",
-			setup: func() storagecommon.EventStorage {
+			setup: func() i.Storage {
 				s := New()
 				for _, e := range events {
 					_, _ = s.Create(e)
@@ -371,7 +478,7 @@ func TestStorage_ListByUser(t *testing.T) {
 		{
 			name:   "list user2 events",
 			userID: "user2",
-			setup: func() storagecommon.EventStorage {
+			setup: func() i.Storage {
 				s := New()
 				for _, e := range events {
 					_, _ = s.Create(e)
@@ -383,7 +490,7 @@ func TestStorage_ListByUser(t *testing.T) {
 		{
 			name:   "list empty",
 			userID: "user3",
-			setup: func() storagecommon.EventStorage {
+			setup: func() i.Storage {
 				s := New()
 				for _, e := range events {
 					_, _ = s.Create(e)
@@ -475,7 +582,7 @@ func TestStorage_ListByUserInRange(t *testing.T) {
 		},
 	}
 
-	setup := func() storagecommon.EventStorage {
+	setup := func() i.Storage {
 		s := New()
 		for _, e := range events {
 			_, _ = s.Create(e)

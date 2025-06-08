@@ -90,22 +90,6 @@ func (a *App) ListEventsByUserInRange(
 	return domainEvents, nil
 }
 
-func (a *App) ListEventsDueBefore(_ context.Context, before time.Time) ([]types.Event, error) {
-	allEvents, err := a.Storage.List()
-	if err != nil {
-		return nil, err
-	}
-
-	now := time.Now()
-	dueEvents := make([]types.Event, 0)
-
-	for _, event := range allEvents {
-		notifyAt := event.StartTime.Add(-time.Second * time.Duration(event.NotifyBefore))
-
-		if event.StartTime.After(now) && notifyAt.Before(before) && notifyAt.After(now) {
-			dueEvents = append(dueEvents, mappers.ToDomainEvent(event))
-		}
-	}
-
-	return dueEvents, nil
+func (a *App) DeleteOlderThan(_ context.Context, t time.Time) error {
+	return a.Storage.DeleteOlder(t)
 }

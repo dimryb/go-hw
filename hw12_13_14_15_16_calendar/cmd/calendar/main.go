@@ -11,7 +11,7 @@ import (
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/config"
 	i "github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/interface"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/logger"
-	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/service"
+	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/service/calendar"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage"
 )
 
@@ -63,7 +63,7 @@ func run(configPath string, migrate bool) {
 	}
 
 	application := app.NewApp(storageApp, logg)
-	calendarService := service.NewCalendar(application, logg, cfg)
+	calendarService := calendar.NewCalendar(application, logg, cfg)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)

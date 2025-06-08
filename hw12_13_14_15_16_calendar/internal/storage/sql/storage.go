@@ -168,6 +168,11 @@ func (s *Storage) Delete(id string) error {
 	return nil
 }
 
+func (s *Storage) DeleteOlder(t time.Time) error {
+	_, err := s.db.Exec("DELETE FROM events WHERE end_time < $1", t)
+	return err
+}
+
 func (s *Storage) GetByID(id string) (storagecommon.Event, error) {
 	if id == "" {
 		return storagecommon.Event{}, storagecommon.ErrEventNotFound
