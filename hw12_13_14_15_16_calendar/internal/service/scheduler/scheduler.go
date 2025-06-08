@@ -38,7 +38,7 @@ func (s *Scheduler) Run(ctx context.Context) error {
 			return ctx.Err()
 		case <-ticker.C:
 			now := time.Now()
-			events, err := ListEventsDueBefore(ctx, s.app, now.Add(s.cfg.Interval))
+			events, err := s.app.ListEventsDueBefore(ctx, now.Add(s.cfg.Interval))
 			if err != nil {
 				s.logger.Errorf("Error fetching events: %v", err)
 				continue
