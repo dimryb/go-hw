@@ -6,14 +6,16 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
+	i "github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/interface"
 )
 
 type CalendarHandlers struct {
-	app    Application
-	logger Logger
+	app    i.Application
+	logger i.Logger
 }
 
-func NewCalendarHandlers(app Application, logger Logger) *CalendarHandlers {
+func NewCalendarHandlers(app i.Application, logger i.Logger) *CalendarHandlers {
 	return &CalendarHandlers{app, logger}
 }
 

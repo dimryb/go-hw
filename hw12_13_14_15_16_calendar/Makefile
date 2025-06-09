@@ -1,4 +1,6 @@
 BIN := "./bin/calendar"
+SCHEDULER_BIN := "./bin/calendar_scheduler"
+SENDER_BIN := "./bin/calendar_sender"
 DOCKER_IMG="calendar:develop"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
@@ -6,6 +8,8 @@ LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%d
 
 build:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
+	go build -v -o $(SCHEDULER_BIN) -ldflags "$(LDFLAGS)" ./cmd/scheduler
+	go build -v -o $(SENDER_BIN) -ldflags "$(LDFLAGS)" ./cmd/sender
 
 run: build
 	$(BIN) -config ./configs/config.toml
@@ -44,4 +48,8 @@ generate-mocks:
 swagger:
 	swag init -g cmd/calendar/main.go -o internal/server/http/docs/
 
-.PHONY: build run build-img run-img version test lint generate generate-mocks
+rabbit:
+	# http://localhost:15672 guest:guest
+	docker run -d --name rabbitmq -p 15672:15672 -p 5672:5672 rabbitmq:3-management
+
+.PHONY: build run build-img run-img version test lint generate generate-mocks swagger rabbit

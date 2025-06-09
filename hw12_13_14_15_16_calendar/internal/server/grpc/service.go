@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	i "github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/interface"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/mappers"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage/common"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/types"
@@ -32,10 +33,10 @@ type Storage interface {
 
 type CalendarService struct {
 	calendar.UnimplementedCalendarServiceServer
-	app Application
+	app i.Application
 }
 
-func NewCalendarService(app Application) *CalendarService {
+func NewCalendarService(app i.Application) *CalendarService {
 	return &CalendarService{
 		app: app,
 	}

@@ -1,47 +1,27 @@
 package grpc
 
 import (
-	"context"
 	"fmt"
 	"net"
-	"time"
 
+	i "github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/interface"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/server/grpc/interceptors"
-	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/types"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/proto/calendar"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
-type Application interface {
-	CreateEvent(context.Context, types.Event) (string, error)
-	UpdateEvent(context.Context, types.Event) error
-	DeleteEvent(context.Context, string) error
-	GetEventByID(context.Context, string) (types.Event, error)
-	ListEvents(context.Context) ([]types.Event, error)
-	ListEventsByUser(context.Context, string) ([]types.Event, error)
-	ListEventsByUserInRange(context.Context, string, time.Time, time.Time) ([]types.Event, error)
-}
-
-type Logger interface {
-	Debugf(string, ...interface{})
-	Infof(string, ...interface{})
-	Warnf(string, ...interface{})
-	Errorf(string, ...interface{})
-	Fatalf(string, ...interface{})
-}
-
 type Server struct {
-	app Application
+	app i.Application
 	cfg ServerConfig
-	log Logger
+	log i.Logger
 }
 
 type ServerConfig struct {
 	Port string
 }
 
-func NewServer(app Application, cfg ServerConfig, log Logger) *Server {
+func NewServer(app i.Application, cfg ServerConfig, log i.Logger) *Server {
 	return &Server{
 		app: app,
 		cfg: cfg,

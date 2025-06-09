@@ -8,9 +8,11 @@ import (
 	"testing"
 	"time"
 
+	i "github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/interface"
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage/common"
-	"github.com/pressly/goose/v3"         //nolint:depguard
-	"github.com/stretchr/testify/require" //nolint:depguard
+	"github.com/pressly/goose/v3"        //nolint:depguard
+	"github.com/stretchr/testify/assert" //nolint:depguard
+	"github.com/stretchr/testify/require"
 )
 
 type EventNoTime struct {
@@ -48,13 +50,13 @@ func TestStorage_Create(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   storagecommon.Event
-		setup   func(*Storage) storagecommon.EventStorage
+		setup   func(*Storage) i.Storage
 		wantErr error
 	}{
 		{
 			name:  "success create new event",
 			input: event,
-			setup: func(storageDB *Storage) storagecommon.EventStorage {
+			setup: func(storageDB *Storage) i.Storage {
 				return storageDB
 			},
 			wantErr: nil,
@@ -62,7 +64,7 @@ func TestStorage_Create(t *testing.T) {
 		{
 			name:  "fail event already exists",
 			input: event,
-			setup: func(storageDB *Storage) storagecommon.EventStorage {
+			setup: func(storageDB *Storage) i.Storage {
 				_, _ = storageDB.Create(event)
 				return storageDB
 			},
@@ -76,7 +78,7 @@ func TestStorage_Create(t *testing.T) {
 				EndTime:   now.Add(time.Hour + 30*time.Minute),
 				UserID:    "user1",
 			},
-			setup: func(storageDB *Storage) storagecommon.EventStorage {
+			setup: func(storageDB *Storage) i.Storage {
 				_, _ = storageDB.Create(event)
 				return storageDB
 			},
@@ -90,7 +92,7 @@ func TestStorage_Create(t *testing.T) {
 				EndTime:   now.Add(time.Hour + 30*time.Minute),
 				UserID:    "user2",
 			},
-			setup: func(storageDB *Storage) storagecommon.EventStorage {
+			setup: func(storageDB *Storage) i.Storage {
 				_, _ = storageDB.Create(event)
 				return storageDB
 			},
@@ -253,13 +255,13 @@ func TestStorage_Delete(t *testing.T) {
 	tests := []struct {
 		name    string
 		inputID *string
-		setup   func(*Storage) (storagecommon.EventStorage, string)
+		setup   func(*Storage) (i.Storage, string)
 		wantErr error
 	}{
 		{
 			name:    "success delete existing event",
 			inputID: nil,
-			setup: func(storageDB *Storage) (storagecommon.EventStorage, string) {
+			setup: func(storageDB *Storage) (i.Storage, string) {
 				id, _ := storageDB.Create(event)
 				return storageDB, id
 			},
@@ -271,7 +273,7 @@ func TestStorage_Delete(t *testing.T) {
 				id := "12345678-1234-1234-1234-123456780002"
 				return &id
 			}(),
-			setup: func(storageDB *Storage) (storagecommon.EventStorage, string) {
+			setup: func(storageDB *Storage) (i.Storage, string) {
 				id, _ := storageDB.Create(event)
 				return storageDB, id
 			},
@@ -304,6 +306,114 @@ func TestStorage_Delete(t *testing.T) {
 	}
 }
 
+func TestStorage_DeleteOlder(t *testing.T) {
+	if os.Getenv("TEST_SQL") == "" {
+		t.Skip("TEST_SQL not set")
+	}
+
+	now := time.Now().UTC()
+
+	tests := []struct {
+		name        string
+		cutoffTime  time.Time
+		setupEvents []storagecommon.Event
+		expected    int
+	}{
+		{
+			name:       "delete old events",
+			cutoffTime: now,
+			setupEvents: []storagecommon.Event{
+				{
+					Title:       "Past Event",
+					StartTime:   now.Add(-2 * time.Hour),
+					EndTime:     now.Add(-1 * time.Hour),
+					Description: "Should be deleted",
+					UserID:      "user1",
+				},
+				{
+					Title:       "Future Event",
+					StartTime:   now.Add(1 * time.Hour),
+					EndTime:     now.Add(2 * time.Hour),
+					Description: "Should stay",
+					UserID:      "user1",
+				},
+			},
+			expected: 1,
+		},
+		{
+			name:       "no deletion if all events are newer",
+			cutoffTime: now.Add(-1 * time.Hour),
+			setupEvents: []storagecommon.Event{
+				{
+					Title:       "Event A",
+					StartTime:   now,
+					EndTime:     now.Add(1 * time.Hour),
+					Description: "Should stay",
+					UserID:      "user1",
+				},
+				{
+					Title:       "Event B",
+					StartTime:   now.Add(2 * time.Hour),
+					EndTime:     now.Add(3 * time.Hour),
+					Description: "Should stay",
+					UserID:      "user1",
+				},
+			},
+			expected: 0,
+		},
+		{
+			name:       "all events should be deleted",
+			cutoffTime: now.Add(1 * time.Hour),
+			setupEvents: []storagecommon.Event{
+				{
+					Title:       "Event A",
+					StartTime:   now.Add(-3 * time.Hour),
+					EndTime:     now.Add(-2 * time.Hour),
+					Description: "Deleted",
+					UserID:      "user1",
+				},
+				{
+					Title:       "Event B",
+					StartTime:   now.Add(-1 * time.Hour),
+					EndTime:     now.Add(-30 * time.Minute),
+					Description: "Deleted",
+					UserID:      "user1",
+				},
+			},
+			expected: 2,
+		},
+	}
+
+	storageDB := newSQLStorage()
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			initDB(t, storageDB)
+			defer teardownDB(t, storageDB)
+
+			for _, event := range tt.setupEvents {
+				_, err := storageDB.Create(event)
+				require.NoError(t, err)
+			}
+
+			initialCount := countAllEvents(t, storageDB)
+
+			err := storageDB.DeleteOlder(tt.cutoffTime)
+			require.NoError(t, err)
+
+			finalCount := countAllEvents(t, storageDB)
+			assert.Equal(t, initialCount-func() int { return finalCount }(), tt.expected)
+		})
+	}
+}
+
+func countAllEvents(t *testing.T, storage i.Storage) int {
+	t.Helper()
+	events, err := storage.List()
+	require.NoError(t, err)
+	return len(events)
+}
+
 func TestStorage_GetByID(t *testing.T) {
 	if os.Getenv("TEST_SQL") == "" {
 		t.Skip("TEST_SQL not set")
@@ -322,13 +432,13 @@ func TestStorage_GetByID(t *testing.T) {
 	tests := []struct {
 		name    string
 		inputID *string
-		setup   func(*Storage) (storagecommon.EventStorage, string)
+		setup   func(*Storage) (i.Storage, string)
 		wantErr error
 	}{
 		{
 			name:    "success get existing event",
 			inputID: nil,
-			setup: func(storageDB *Storage) (storagecommon.EventStorage, string) {
+			setup: func(storageDB *Storage) (i.Storage, string) {
 				id, _ := storageDB.Create(event)
 				return storageDB, id
 			},
@@ -340,7 +450,7 @@ func TestStorage_GetByID(t *testing.T) {
 				id := "12345678-1234-1234-1234-123456780003"
 				return &id
 			}(),
-			setup: func(storageDB *Storage) (storagecommon.EventStorage, string) {
+			setup: func(storageDB *Storage) (i.Storage, string) {
 				id, _ := storageDB.Create(event)
 				return storageDB, id
 			},

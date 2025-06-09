@@ -3,14 +3,15 @@ package logger
 import (
 	"os"
 
+	i "github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/interface"
 	"github.com/sirupsen/logrus" //nolint: depguard
 )
 
-type Logger struct {
+type logger struct {
 	level string
 }
 
-func New(level string) *Logger {
+func New(level string) i.Logger {
 	logrusLevel, err := logrus.ParseLevel(level)
 	if err != nil {
 		logrus.SetLevel(logrus.DebugLevel)
@@ -24,27 +25,27 @@ func New(level string) *Logger {
 
 	logrus.SetOutput(os.Stdout)
 
-	return &Logger{
+	return &logger{
 		level: level,
 	}
 }
 
-func (Logger) Debugf(format string, args ...interface{}) {
+func (logger) Debugf(format string, args ...interface{}) {
 	logrus.Debugf(format, args...)
 }
 
-func (Logger) Infof(format string, args ...interface{}) {
+func (logger) Infof(format string, args ...interface{}) {
 	logrus.Infof(format, args...)
 }
 
-func (Logger) Warnf(format string, args ...interface{}) {
+func (logger) Warnf(format string, args ...interface{}) {
 	logrus.Warnf(format, args...)
 }
 
-func (Logger) Errorf(format string, args ...interface{}) {
+func (logger) Errorf(format string, args ...interface{}) {
 	logrus.Errorf(format, args...)
 }
 
-func (Logger) Fatalf(format string, args ...interface{}) {
+func (logger) Fatalf(format string, args ...interface{}) {
 	logrus.Fatalf(format, args...)
 }
