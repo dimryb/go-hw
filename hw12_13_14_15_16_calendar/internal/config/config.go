@@ -19,6 +19,14 @@ type (
 		MigrationsPath string        `yaml:"migrations" env:"MIGRATIONS_PATH"`
 		Timeout        time.Duration `yaml:"timeout"`
 	}
+
+	RabbitMQ struct {
+		Host     string `yaml:"host"`
+		Port     string `yaml:"port"`
+		User     string `yaml:"user"`
+		Password string `yaml:"password"`
+		Exchange string `yaml:"exchange"`
+	}
 )
 
 func Load(configPath string, target any) error {
