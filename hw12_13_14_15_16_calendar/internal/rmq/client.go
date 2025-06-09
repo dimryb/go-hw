@@ -71,6 +71,17 @@ func (c *client) Consume(queueName string) (<-chan []byte, error) {
 		return nil, err
 	}
 
+	err = c.channel.QueueBind(
+		queue.Name,
+		"#",
+		c.exchange,
+		false,
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	msgs, err := c.channel.Consume(
 		queue.Name,
 		"",
