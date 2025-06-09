@@ -47,6 +47,21 @@ func (mr *MockRmqClientMockRecorder) Close() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockRmqClient)(nil).Close))
 }
 
+// Consume mocks base method.
+func (m *MockRmqClient) Consume(queueName string) (<-chan []byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Consume", queueName)
+	ret0, _ := ret[0].(<-chan []byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Consume indicates an expected call of Consume.
+func (mr *MockRmqClientMockRecorder) Consume(queueName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Consume", reflect.TypeOf((*MockRmqClient)(nil).Consume), queueName)
+}
+
 // Publish mocks base method.
 func (m *MockRmqClient) Publish(routingKey string, body []byte) error {
 	m.ctrl.T.Helper()
