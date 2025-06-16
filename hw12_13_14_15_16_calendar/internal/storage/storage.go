@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage/common"
+	i "github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/interface"
 	memorystorage "github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage/memory"
 	sqlstorage "github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/storage/sql"
 )
@@ -18,7 +18,7 @@ type Config struct {
 	Migration      bool
 }
 
-func InitStorage(cfg Config) (storagecommon.EventStorage, error) {
+func InitStorage(cfg Config) (i.Storage, error) {
 	switch cfg.Type {
 	case "memory":
 		return memorystorage.New(), nil

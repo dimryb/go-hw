@@ -78,6 +78,19 @@ func (s *Storage) Delete(id string) error {
 	return nil
 }
 
+func (s *Storage) DeleteOlder(t time.Time) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for id, event := range s.events {
+		if event.EndTime.Before(t) {
+			delete(s.events, id)
+		}
+	}
+
+	return nil
+}
+
 func (s *Storage) List() ([]storagecommon.Event, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()

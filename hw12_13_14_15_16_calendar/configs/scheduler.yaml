@@ -1,0 +1,18 @@
+rabbitmq:
+  host: "localhost"
+  port: "5672"
+  user: "guest"
+  password: "guest"
+  exchange: "notifications"
+
+database:
+  type: postgres
+  dsn: "postgresql://postgres@localhost:5432/calendar?sslmode=disable"
+  timeout: "10s"
+
+scheduler:
+  interval: 10s
+  retentionPeriod: 8760h
+
+log:
+  level: 'debug'

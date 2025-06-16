@@ -9,22 +9,6 @@ import (
 )
 
 type (
-	Config struct {
-		HTTP     `yaml:"http"`
-		Log      `yaml:"log"`
-		Database `yaml:"database"`
-		GRPC     `yaml:"grpc"`
-	}
-
-	HTTP struct {
-		Host              string        `yaml:"host" env:"HTTP_HOST"`
-		Port              string        `yaml:"port" env:"HTTP_PORT"`
-		ReadTimeout       time.Duration `yaml:"readTimeout"`
-		WriteTimeout      time.Duration `yaml:"writeTimeout"`
-		IdleTimeout       time.Duration `yaml:"idleTimeout"`
-		ReadHeaderTimeout time.Duration `yaml:"readHeaderTimeout"`
-	}
-
 	Log struct {
 		Level string `yaml:"level" env:"LOG_LEVEL"`
 	}
@@ -36,24 +20,25 @@ type (
 		Timeout        time.Duration `yaml:"timeout"`
 	}
 
-	GRPC struct {
-		Enable bool   `yaml:"enable"`
-		Port   string `yaml:"port" env:"GRPC_PORT"`
+	RabbitMQ struct {
+		Host     string `yaml:"host"`
+		Port     string `yaml:"port"`
+		User     string `yaml:"user"`
+		Password string `yaml:"password"`
+		Exchange string `yaml:"exchange"`
 	}
 )
 
-func NewConfig(configPath string) (*Config, error) {
-	cfg := &Config{}
-
-	err := cleanenv.ReadConfig(path.Join("./", configPath), cfg)
+func Load(configPath string, target any) error {
+	err := cleanenv.ReadConfig(path.Join("./", configPath), target)
 	if err != nil {
-		return nil, fmt.Errorf("error reading config file: %w", err)
+		return fmt.Errorf("error reading config file: %w", err)
 	}
 
-	err = cleanenv.UpdateEnv(cfg)
+	err = cleanenv.UpdateEnv(target)
 	if err != nil {
-		return nil, fmt.Errorf("error updating env: %w", err)
+		return fmt.Errorf("error updating env: %w", err)
 	}
 
-	return cfg, nil
+	return nil
 }
