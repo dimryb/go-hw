@@ -14,7 +14,7 @@ type App struct {
 	Storage i.Storage
 }
 
-func NewApp(storage i.Storage, logger i.Logger) i.Application {
+func NewApp(storage i.Storage, logger i.Logger) *App {
 	return &App{
 		Storage: storage,
 		Logger:  logger,
