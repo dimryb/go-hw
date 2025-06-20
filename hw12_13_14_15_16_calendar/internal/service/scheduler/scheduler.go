@@ -54,7 +54,10 @@ func (s *Scheduler) Run(ctx context.Context) error {
 					NotifyAt:    now.Format(time.RFC3339),
 				}
 
-				body, _ := json.Marshal(dto)
+				body, err := json.Marshal(dto)
+				if err != nil {
+					s.logger.Errorf("Error marshalling notification: %v", err)
+				}
 				if err := s.rmq.Publish(event.UserID, body); err != nil {
 					s.logger.Errorf("Failed to publish notification for event %s: %v", event.ID, err)
 					continue
