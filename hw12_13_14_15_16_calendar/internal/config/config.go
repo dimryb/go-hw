@@ -15,7 +15,7 @@ type (
 
 	Database struct {
 		Type           string        `yaml:"type"`
-		DSN            string        `yaml:"dsn"`
+		DSN            string        `yaml:"dsn" env:"DATABASE_DSN"`
 		MigrationsPath string        `yaml:"migrations" env:"MIGRATIONS_PATH"`
 		Timeout        time.Duration `yaml:"timeout"`
 	}

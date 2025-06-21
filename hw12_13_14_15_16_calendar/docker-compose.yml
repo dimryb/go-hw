@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16
+    container_name: calendar-db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: calendar
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  calendar:
+    image: calendar:develop
+    container_name: calendar-app
+    depends_on:
+      - db
+    environment:
+      DATABASE_DSN: "postgresql://user:pass@db:5432/calendar?sslmode=disable"
+    ports:
+      - "8080:8080"
+
+volumes:
+  pgdata:

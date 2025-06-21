@@ -1,7 +1,6 @@
 BIN := "./bin/calendar"
 SCHEDULER_BIN := "./bin/calendar_scheduler"
 SENDER_BIN := "./bin/calendar_sender"
-#DOCKER_IMG="calendar:develop"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
