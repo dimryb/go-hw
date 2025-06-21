@@ -11,7 +11,7 @@ build:
 	go build -v -o $(SENDER_BIN) -ldflags "$(LDFLAGS)" ./cmd/sender
 
 run: build
-	$(BIN) -config ./configs/config.toml
+	$(BIN) -config ./configs/calendar.yaml
 
 build-img:
 	docker build \
