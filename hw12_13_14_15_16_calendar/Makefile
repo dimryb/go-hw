@@ -20,6 +20,12 @@ build-img:
 		-t $(DOCKER_IMG) \
 		-f build/Dockerfile .
 
+build-calendar-img:
+	docker build \
+        --build-arg=LDFLAGS="$(LDFLAGS)" \
+        -t $(DOCKER_IMG) \
+        -f build/calendar/Dockerfile .
+
 run-img: build-img
 	docker run $(DOCKER_IMG)
 
@@ -52,4 +58,4 @@ rabbit:
 	# http://localhost:15672 guest:guest
 	docker run -d --name rabbitmq -p 15672:15672 -p 5672:5672 rabbitmq:3-management
 
-.PHONY: build run build-img run-img version test lint generate generate-mocks swagger rabbit
+.PHONY: build run build-img build-calendar-img run-img version test lint generate generate-mocks swagger rabbit
