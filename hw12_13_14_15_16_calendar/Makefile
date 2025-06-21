@@ -1,7 +1,7 @@
 BIN := "./bin/calendar"
 SCHEDULER_BIN := "./bin/calendar_scheduler"
 SENDER_BIN := "./bin/calendar_sender"
-DOCKER_IMG="calendar:develop"
+#DOCKER_IMG="calendar:develop"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
@@ -30,6 +30,16 @@ build-calendar-img:
 	$(MAKE) build-service \
         DOCKER_IMG=calendar:develop \
         DOCKERFILE_PATH=build/calendar/Dockerfile
+
+build-scheduler-img:
+	$(MAKE) build-service \
+        DOCKER_IMG=scheduler:develop \
+        DOCKERFILE_PATH=build/scheduler/Dockerfile
+
+build-sender-img:
+	$(MAKE) build-service \
+        DOCKER_IMG=sender:develop \
+        DOCKERFILE_PATH=build/sender/Dockerfile
 
 run-img: build-img
 	docker run $(DOCKER_IMG)
@@ -63,4 +73,4 @@ rabbit:
 	# http://localhost:15672 guest:guest
 	docker run -d --name rabbitmq -p 15672:15672 -p 5672:5672 rabbitmq:3-management
 
-.PHONY: build run build-img build-calendar-img run-img version test lint generate generate-mocks swagger rabbit
+.PHONY: build run build-img build-calendar-img build-scheduler-img build-sender-img run-img version test lint generate generate-mocks swagger rabbit
