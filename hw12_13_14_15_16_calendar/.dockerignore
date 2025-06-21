@@ -1,0 +1,38 @@
+# .dockerignore
+
+# Исключаем временные и служебные папки
+.git
+.gitignore
+.dockerignore
+
+# Исключаем бинарники и кэши
+/bin/
+/log/
+/logs/
+/cache/
+/temp/
+/tmp/
+
+# Исключаем IDE-файлы
+/.idea/
+/.vscode/
+/.env
+*.suo
+*.user
+*.userosscache
+*.sln
+*.csproj
+*.sublime-project
+*.sublime-workspace
+
+# Исключаем тестовые данные
+/testdata/
+/fixtures/
+/mock/
+/mocks/
+/stub/
+
+# Исключаем CI/CD
+/.github/
+/.gitlab-ci.yml
+/Dockerfile

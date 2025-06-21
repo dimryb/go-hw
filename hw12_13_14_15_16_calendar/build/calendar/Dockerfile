@@ -30,7 +30,7 @@ LABEL MAINTAINERS="dimryb@bk.ru"
 ENV BIN_FILE "/opt/calendar/calendar-app"
 COPY --from=builder ${BIN_FILE} ${BIN_FILE}
 
-ENV CONFIG_FILE /etc/calendar/config.toml
+ENV CONFIG_FILE /etc/calendar/config.yaml
 COPY ./configs/calendar.yaml ${CONFIG_FILE}
 
 CMD ${BIN_FILE} -config ${CONFIG_FILE}

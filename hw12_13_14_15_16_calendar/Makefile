@@ -20,11 +20,16 @@ build-img:
 		-t $(DOCKER_IMG) \
 		-f build/Dockerfile .
 
-build-calendar-img:
+build-service:
 	docker build \
-        --build-arg=LDFLAGS="$(LDFLAGS)" \
+        --build-arg LDFLAGS="$(LDFLAGS)" \
         -t $(DOCKER_IMG) \
-        -f build/calendar/Dockerfile .
+        -f $(DOCKERFILE_PATH) .
+
+build-calendar-img:
+	$(MAKE) build-service \
+        DOCKER_IMG=calendar:develop \
+        DOCKERFILE_PATH=build/calendar/Dockerfile
 
 run-img: build-img
 	docker run $(DOCKER_IMG)
