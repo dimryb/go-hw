@@ -17,15 +17,16 @@ type (
 		Type           string        `yaml:"type"`
 		DSN            string        `yaml:"dsn" env:"DATABASE_DSN"`
 		MigrationsPath string        `yaml:"migrations" env:"MIGRATIONS_PATH"`
+		Migrate        bool          `yaml:"migrate" env:"MIGRATE"`
 		Timeout        time.Duration `yaml:"timeout"`
 	}
 
 	RabbitMQ struct {
-		Host     string `yaml:"host"`
-		Port     string `yaml:"port"`
-		User     string `yaml:"user"`
-		Password string `yaml:"password"`
-		Exchange string `yaml:"exchange"`
+		Host     string `yaml:"host" env:"RABBIT_HOST"`
+		Port     string `yaml:"port" env:"RABBIT_PORT"`
+		User     string `yaml:"user" env:"RABBIT_USER"`
+		Password string `yaml:"password" env:"RABBIT_PASSWORD"`
+		Exchange string `yaml:"exchange" env:"RABBIT_EXCHANGE"`
 	}
 )
 

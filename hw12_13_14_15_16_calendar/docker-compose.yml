@@ -12,6 +12,26 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U user -d calendar" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"        # AMQP
+      - "15672:15672"      # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: [ "CMD-SHELL", "echo 'Testing RabbitMQ connectivity...'; rabbitmq-diagnostics ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   calendar:
     image: calendar:develop
@@ -20,8 +40,27 @@ services:
       - db
     environment:
       DATABASE_DSN: "postgresql://user:pass@db:5432/calendar?sslmode=disable"
+      MIGRATIONS_PATH: "/app/migrations"
+      MIGRATE: true
     ports:
       - "8080:8080"
+
+  scheduler:
+    image: scheduler:develop
+    container_name: scheduler-app
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      DATABASE_DSN: "postgresql://user:pass@db:5432/calendar?sslmode=disable"
+      RABBIT_HOST: rabbitmq
+      RABBIT_PORT: 5672
+      RABBIT_USER: guest
+      RABBIT_PASSWORD: guest
+    ports:
+      - "8081:8081"
 
 volumes:
   pgdata:

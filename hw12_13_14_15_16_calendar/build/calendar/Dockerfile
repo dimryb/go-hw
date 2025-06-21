@@ -33,4 +33,6 @@ COPY --from=builder ${BIN_FILE} ${BIN_FILE}
 ENV CONFIG_FILE /etc/calendar/config.yaml
 COPY ./configs/calendar.yaml ${CONFIG_FILE}
 
+COPY migrations /app/migrations
+
 CMD ${BIN_FILE} -config ${CONFIG_FILE}

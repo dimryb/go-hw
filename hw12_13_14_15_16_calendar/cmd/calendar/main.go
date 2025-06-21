@@ -56,7 +56,7 @@ func run(configPath string, migrate bool) {
 		DSN:            cfg.Database.DSN,
 		MigrationsPath: cfg.Database.MigrationsPath,
 		Timeout:        cfg.Database.Timeout,
-		Migration:      migrate,
+		Migration:      cfg.Database.Migrate || migrate,
 	})
 	if err != nil {
 		logg.Fatalf("Failed to initialize storage: %v", err)
