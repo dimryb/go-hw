@@ -46,7 +46,7 @@ services:
       MIGRATIONS_PATH: "/app/migrations"
       MIGRATE: true
     ports:
-      - "8080:8080"
+      - "8888:8080"
 
   scheduler:
     image: scheduler:develop
