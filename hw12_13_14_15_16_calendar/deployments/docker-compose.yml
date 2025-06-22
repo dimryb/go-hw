@@ -37,7 +37,8 @@ services:
     image: calendar:develop
     container_name: calendar-app
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       HTTP_HOST: "0.0.0.0"
       HTTP_PORT: 8080
