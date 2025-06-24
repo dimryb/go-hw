@@ -35,4 +35,6 @@ COPY ./configs/calendar.yaml ${CONFIG_FILE}
 
 COPY migrations /app/migrations
 
+RUN apk add --no-cache curl
+
 CMD ${BIN_FILE} -config ${CONFIG_FILE}

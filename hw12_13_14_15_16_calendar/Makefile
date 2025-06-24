@@ -2,9 +2,12 @@ BIN := "./bin/calendar"
 SCHEDULER_BIN := "./bin/calendar_scheduler"
 SENDER_BIN := "./bin/calendar_sender"
 COMPOSE_FILE := "deployments/docker-compose.yml"
+INTEGRATION_COMPOSE_FILE := "deployments/docker-compose.integration.yml"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
+
+DOCKER_COMPOSE_TEST := docker compose -f ${INTEGRATION_COMPOSE_FILE}
 
 build:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
@@ -35,6 +38,11 @@ build-sender-img:
         DOCKER_IMG=sender:develop \
         DOCKERFILE_PATH=build/sender/Dockerfile
 
+build-testrunner-img:
+	docker build \
+            -f build/testrunner/Dockerfile \
+            -t calendar-testrunner .
+
 up:
 	docker compose -f ${COMPOSE_FILE} up -d
 
@@ -47,6 +55,10 @@ logs:
 rebuild: build-calendar-img build-scheduler-img build-sender-img up
 
 restart: down up
+
+integration-tests:
+	docker compose -f ${INTEGRATION_COMPOSE_FILE} down
+	docker compose -f ${INTEGRATION_COMPOSE_FILE} up --abort-on-container-exit
 
 version: build
 	$(BIN) version

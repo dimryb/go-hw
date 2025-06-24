@@ -47,6 +47,11 @@ services:
       MIGRATE: true
     ports:
       - "8888:8080"
+    healthcheck:
+      test: [ "CMD", "sh", "-c", "echo 'Checking calendar health'; curl -f http://localhost:8080/ || exit 1" ]
+      interval: 2s
+      timeout: 5s
+      retries: 10
 
   scheduler:
     image: scheduler:develop
@@ -65,7 +70,22 @@ services:
     ports:
       - "8081:8081"
 
-  #TODO: добавить sender
+  testrunner:
+    image: calendar-testrunner
+    container_name: integration-tests
+    build:
+      context: .
+      dockerfile: build/testrunner/Dockerfile
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      calendar:
+        condition: service_healthy
+      scheduler:
+        condition: service_started
+    entrypoint: ["/app/integration-tests"]
 
 volumes:
   pgdata:
+
+
