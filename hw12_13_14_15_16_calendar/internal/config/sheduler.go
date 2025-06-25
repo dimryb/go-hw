@@ -11,7 +11,7 @@ type (
 	}
 
 	Scheduler struct {
-		Interval        time.Duration `yaml:"interval"`
+		Interval        time.Duration `yaml:"interval" env:"INTERVAL"`
 		RetentionPeriod time.Duration `yaml:"retentionPeriod"`
 	}
 )

@@ -56,7 +56,11 @@ rebuild: build-calendar-img build-scheduler-img build-sender-img up
 
 restart: down up
 
-integration-tests: build-testrunner-img
+reset-db:
+	docker compose -f ${INTEGRATION_COMPOSE_FILE} down --volumes
+	docker compose -f ${INTEGRATION_COMPOSE_FILE} up -d db
+
+integration-tests: reset-db build-testrunner-img
 	docker compose -f ${INTEGRATION_COMPOSE_FILE} up --abort-on-container-exit
 	docker compose -f ${INTEGRATION_COMPOSE_FILE} down --rmi local
 

@@ -6,7 +6,14 @@ RUN CGO_ENABLED=0 go test -c -o /integration-tests ./tests/integration
 
 FROM alpine:3.9
 
-WORKDIR /app
-COPY --from=builder /integration-tests /app/integration-tests
+LABEL ORGANIZATION="DimRyb"
+LABEL SERVICE="testrunner"
+LABEL MAINTAINERS="dimryb@bk.ru"
 
-ENTRYPOINT ["/app/integration-tests"]
+WORKDIR /app
+
+COPY --from=builder /integration-tests /app/integration-tests
+COPY cmd/scripts/wait-for-rabbit.sh /wait-for-rabbit.sh
+RUN chmod +x /wait-for-rabbit.sh
+
+ENTRYPOINT ["sh", "-c", "/wait-for-rabbit.sh && /app/integration-tests"]

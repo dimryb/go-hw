@@ -67,6 +67,7 @@ services:
       RABBIT_PORT: 5672
       RABBIT_USER: guest
       RABBIT_PASSWORD: guest
+      INTERVAL: 5s
     ports:
       - "8081:8081"
 
@@ -77,13 +78,18 @@ services:
       context: .
       dockerfile: build/testrunner/Dockerfile
     depends_on:
-      rabbitmq:
-        condition: service_healthy
       calendar:
         condition: service_healthy
       scheduler:
         condition: service_started
-    entrypoint: ["/app/integration-tests"]
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      DATABASE_DSN: "postgresql://user:pass@db:5432/calendar?sslmode=disable"
+      RABBIT_HOST: rabbitmq
+      RABBIT_PORT: 5672
+      RABBIT_USER: guest
+      RABBIT_PASSWORD: guest
 
 volumes:
   pgdata:
