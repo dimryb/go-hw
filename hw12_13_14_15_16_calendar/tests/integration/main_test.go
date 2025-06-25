@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/stretchr/testify/require"
 	"net/http"
 	"testing"
 	"time"
 
 	"github.com/dimryb/go-hw/hw12_13_14_15_calendar/internal/rmq"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type CreateEventRequest struct {
