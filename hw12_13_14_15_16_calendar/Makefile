@@ -56,9 +56,9 @@ rebuild: build-calendar-img build-scheduler-img build-sender-img up
 
 restart: down up
 
-integration-tests:
-	docker compose -f ${INTEGRATION_COMPOSE_FILE} down
+integration-tests: build-testrunner-img
 	docker compose -f ${INTEGRATION_COMPOSE_FILE} up --abort-on-container-exit
+	docker compose -f ${INTEGRATION_COMPOSE_FILE} down --rmi local
 
 version: build
 	$(BIN) version
@@ -89,4 +89,4 @@ rabbit:
 	# http://localhost:15672 guest:guest
 	docker run -d --name rabbitmq -p 15672:15672 -p 5672:5672 rabbitmq:3-management
 
-.PHONY: build run build-img build-calendar-img build-scheduler-img build-sender-img run-img version test lint generate generate-mocks swagger rabbit up down logs rebuild restart
+.PHONY: build run build-img build-calendar-img build-scheduler-img build-sender-img build-testrunner-img run-img version test lint generate generate-mocks swagger rabbit up down logs rebuild restart integration-tests
