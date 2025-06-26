@@ -22,8 +22,8 @@ func TestListEventsByUserInRange(t *testing.T) {
 	from := now.Unix()
 	to := now.Add(24 * time.Hour).Unix()
 
-	createTestEvent(t, ctx, userID, "Event 1", from+3600, from+7200)
-	createTestEvent(t, ctx, userID, "Event 2", from+10800, from+14400)
+	createTestEvent(ctx, t, userID, "Event 1", from+3600, from+7200)
+	createTestEvent(ctx, t, userID, "Event 2", from+10800, from+14400)
 
 	url := fmt.Sprintf("%s/events/range?userId=%s&from=%d&to=%d", calendarBaseURL, userID, from, to)
 
@@ -60,7 +60,7 @@ func TestListEventsByUserInRange(t *testing.T) {
 	}
 }
 
-func createTestEvent(t *testing.T, ctx context.Context, userID, title string, start, end int64) {
+func createTestEvent(ctx context.Context, t *testing.T, userID, title string, start, end int64) {
 	t.Helper()
 	req := CreateEventRequest{
 		UserID:    userID,
