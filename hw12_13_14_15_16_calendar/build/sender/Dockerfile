@@ -33,4 +33,7 @@ COPY --from=builder ${BIN_FILE} ${BIN_FILE}
 ENV CONFIG_FILE /etc/sender/config.yaml
 COPY ./configs/sender.yaml ${CONFIG_FILE}
 
-CMD ${BIN_FILE} -config ${CONFIG_FILE}
+COPY cmd/scripts/wait-for-rabbit.sh /wait-for-rabbit.sh
+RUN chmod +x /wait-for-rabbit.sh
+
+CMD ["sh", "-c", "/wait-for-rabbit.sh && ${BIN_FILE} -config ${CONFIG_FILE}"]

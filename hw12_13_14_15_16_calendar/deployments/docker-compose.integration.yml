@@ -71,6 +71,18 @@ services:
     ports:
       - "8081:8081"
 
+  sender:
+    image: sender:develop
+    container_name: sender-app
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      RABBIT_HOST: rabbitmq
+      RABBIT_PORT: 5672
+      RABBIT_USER: guest
+      RABBIT_PASSWORD: guest
+
   testrunner:
     image: calendar-testrunner
     container_name: integration-tests
