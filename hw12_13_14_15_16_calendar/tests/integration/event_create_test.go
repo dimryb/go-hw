@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"testing"
 	"time"
@@ -61,4 +62,38 @@ func TestCreateEvent_Success(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "created", result.Status)
 	assert.NotEmpty(t, result.ID)
+}
+
+func TestCreateEvent_MissingUserID(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	now := time.Now().UTC()
+	startTime := now.Add(1 * time.Hour).Unix()
+	endTime := startTime + 3600
+
+	req := CreateEventRequest{
+		Title:        "No user",
+		Description:  "",
+		StartTime:    startTime,
+		EndTime:      endTime,
+		NotifyBefore: 0,
+	}
+	body, _ := json.Marshal(req)
+
+	httpReq, err := http.NewRequestWithContext(ctx, "POST", calendarBaseURL+"/event/create", bytes.NewBuffer(body))
+	require.NoError(t, err)
+	httpReq.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(httpReq)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	respBody, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	assert.Contains(t, string(respBody), "UserID is required")
 }
