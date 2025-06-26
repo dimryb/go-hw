@@ -13,15 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type CreateEventRequest struct {
-	UserID       string `json:"userId"`
-	Title        string `json:"title"`
-	Description  string `json:"description"`
-	StartTime    int64  `json:"startTime"`
-	EndTime      int64  `json:"endTime"`
-	NotifyBefore int64  `json:"notifyBefore"`
-}
-
 type Notification struct {
 	ID          string `json:"id"`
 	Title       string `json:"title"`
