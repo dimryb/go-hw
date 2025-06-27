@@ -39,6 +39,36 @@ func NewClient(amqpURL, exchange string) (Client, error) {
 		return nil, err
 	}
 
+	_, err = ch.QueueDeclare(
+		"notifications",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if err := ch.QueueBind("notifications", "notifications", exchange, false, nil); err != nil {
+		return nil, err
+	}
+
+	_, err = ch.QueueDeclare(
+		"notification_status",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if err := ch.QueueBind("notification_status", "status.#", exchange, false, nil); err != nil {
+		return nil, err
+	}
+
 	return &client{
 		channel:  ch,
 		exchange: exchange,

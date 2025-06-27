@@ -44,6 +44,12 @@ func (s *Sender) Run(ctx context.Context) error {
 				s.logger.Errorf("Failed to unmarshal notification: %v", err)
 				continue
 			}
+
+			if notif.UserID == "" || notif.ID == "" {
+				s.logger.Warnf("Received invalid notification: %+v", notif)
+				continue
+			}
+
 			s.logger.Infof("Received notification: %+v", notif)
 
 			if err := s.sendStatus(notif, "delivered"); err != nil {
@@ -67,7 +73,7 @@ func (s *Sender) sendStatus(notification rmq.Notification, status string) error 
 		return err
 	}
 
-	err = s.rmq.Publish("notification_status", body)
+	err = s.rmq.Publish("status.notification", body)
 	if err != nil {
 		s.logger.Errorf("Failed to publish status for notification %s: %v", notification.ID, err)
 		return err

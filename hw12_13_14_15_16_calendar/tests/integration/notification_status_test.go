@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSchedulerIntegration(t *testing.T) {
+func TestNotificationIsSent(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
@@ -51,26 +51,27 @@ func TestSchedulerIntegration(t *testing.T) {
 		assert.Equal(t, "created", createResp["status"])
 	})
 
-	t.Run("WaitForNotificationInRabbitMQ", func(t *testing.T) {
-		rmqClient, err := rmq.NewClient(rabbitURL, exchange)
-		require.NoError(t, err, "Failed to create RMQ client")
+	t.Run("WaitForNotificationStatus", func(t *testing.T) {
+		rmqClient, err := rmq.NewClient(rabbitURL, "notification_status")
+		require.NoError(t, err, "Failed to create RMQ client for status")
 		defer func() { _ = rmqClient.Close() }()
 
-		msgs, err := rmqClient.Consume(exchange)
-		require.NoError(t, err, "Failed to register a consumer")
+		msgs, err := rmqClient.Consume("notification_status")
+		require.NoError(t, err, "Failed to register a consumer for status")
 
 		select {
 		case msg := <-msgs:
-			var notification Notification
-			err := json.Unmarshal(msg, &notification)
+			var status rmq.NotificationStatus
+			err := json.Unmarshal(msg, &status)
 			require.NoError(t, err)
 
-			assert.Equal(t, "Integration Test Event", notification.Title)
-			assert.Equal(t, "user_test_scheduler", notification.UserID)
-			t.Logf("Received notification: %+v", notification)
+			assert.Equal(t, "user_test_scheduler", status.UserID)
+			assert.Equal(t, "delivered", status.Status)
+			assert.NotZero(t, status.Timestamp)
+			t.Logf("Received notification status: %+v", status)
 
 		case <-time.After(60 * time.Second):
-			t.Fatal("Timeout waiting for message in RabbitMQ queue")
+			t.Fatal("Timeout waiting for status message in RabbitMQ queue")
 		}
 	})
 }
