@@ -2,11 +2,10 @@
     "swagger": "2.0",
     "info": {
         "description": "This is a server for Calendar",
-        "title": "Receipt Hub API",
+        "title": "GO-hw API",
         "contact": {},
         "version": "1.0"
     },
-    "host": "localhost:8080",
     "basePath": "/",
     "paths": {
         "/event/create": {

@@ -1,0 +1,109 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16
+    container_name: calendar-db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: calendar
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U user -d calendar" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"        # AMQP
+      - "15672:15672"      # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: [ "CMD-SHELL", "echo 'Testing RabbitMQ connectivity...'; rabbitmq-diagnostics ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  calendar:
+    image: calendar:develop
+    container_name: calendar-app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      HTTP_HOST: "0.0.0.0"
+      HTTP_PORT: 8080
+      DATABASE_DSN: "postgresql://user:pass@db:5432/calendar?sslmode=disable"
+      MIGRATIONS_PATH: "/app/migrations"
+      MIGRATE: true
+    ports:
+      - "8888:8080"
+    healthcheck:
+      test: [ "CMD", "sh", "-c", "echo 'Checking calendar health'; curl -f http://localhost:8080/ || exit 1" ]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  scheduler:
+    image: scheduler:develop
+    container_name: scheduler-app
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      DATABASE_DSN: "postgresql://user:pass@db:5432/calendar?sslmode=disable"
+      RABBIT_HOST: rabbitmq
+      RABBIT_PORT: 5672
+      RABBIT_USER: guest
+      RABBIT_PASSWORD: guest
+      INTERVAL: 5s
+    ports:
+      - "8081:8081"
+
+  sender:
+    image: sender:develop
+    container_name: sender-app
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      RABBIT_HOST: rabbitmq
+      RABBIT_PORT: 5672
+      RABBIT_USER: guest
+      RABBIT_PASSWORD: guest
+
+  testrunner:
+    image: calendar-testrunner
+    container_name: integration-tests
+    build:
+      context: .
+      dockerfile: build/testrunner/Dockerfile
+    depends_on:
+      calendar:
+        condition: service_healthy
+      scheduler:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      DATABASE_DSN: "postgresql://user:pass@db:5432/calendar?sslmode=disable"
+      RABBIT_HOST: rabbitmq
+      RABBIT_PORT: 5672
+      RABBIT_USER: guest
+      RABBIT_PASSWORD: guest
+
+volumes:
+  pgdata:
+
+

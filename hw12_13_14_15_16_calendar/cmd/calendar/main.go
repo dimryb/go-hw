@@ -25,10 +25,9 @@ func init() {
 	flag.BoolVar(&migrate, "migrate", false, "Migrate DB")
 }
 
-// @title Receipt Hub API
+// @title GO-hw API
 // @version 1.0
 // @description This is a server for Calendar
-// @host localhost:8080
 // @BasePath /
 // .
 func main() {
@@ -56,7 +55,7 @@ func run(configPath string, migrate bool) {
 		DSN:            cfg.Database.DSN,
 		MigrationsPath: cfg.Database.MigrationsPath,
 		Timeout:        cfg.Database.Timeout,
-		Migration:      migrate,
+		Migration:      cfg.Database.Migrate || migrate,
 	})
 	if err != nil {
 		logg.Fatalf("Failed to initialize storage: %v", err)

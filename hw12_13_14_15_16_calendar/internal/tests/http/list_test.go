@@ -61,16 +61,18 @@ func TestListEvents(t *testing.T) {
 	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
 
-	assert.Len(t, response.Events, len(eventsToCreate))
-
-	for i, item := range response.Events {
-		dbEvent := eventsToCreate[i]
-		assert.Equal(t, dbEvent.ID, item.ID)
-		assert.Equal(t, dbEvent.UserID, item.UserID)
-		assert.Equal(t, dbEvent.Title, item.Title)
-		assert.Equal(t, dbEvent.Description, item.Description)
-		assert.Equal(t, dbEvent.StartTime.Unix(), item.StartTime)
-		assert.Equal(t, dbEvent.EndTime.Unix(), item.EndTime)
-		assert.Equal(t, int64(dbEvent.NotifyBefore), item.NotifyBefore)
+	actualEvents := make([]storagecommon.Event, 0, len(response.Events))
+	for _, item := range response.Events {
+		actualEvents = append(actualEvents, storagecommon.Event{
+			ID:           item.ID,
+			UserID:       item.UserID,
+			Title:        item.Title,
+			Description:  item.Description,
+			StartTime:    time.Unix(item.StartTime, 0).UTC(),
+			EndTime:      time.Unix(item.EndTime, 0).UTC(),
+			NotifyBefore: int(item.NotifyBefore),
+		})
 	}
+
+	assert.ElementsMatch(t, eventsToCreate, actualEvents)
 }
