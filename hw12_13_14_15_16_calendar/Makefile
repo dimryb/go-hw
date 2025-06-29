@@ -131,4 +131,28 @@ k8s-get-all:
 k8s-pods:
 	kubectl get pods -A
 
-.PHONY: check-docker k8s-start k8s-stop k8s-delete k8s-status k8s-build-and-load k8s-check-images k8s-describe-nodes k8s-get-all k8s-pods
+k8s-apply-deployments:
+	kubectl apply -f k8s/calendar/
+	kubectl apply -f k8s/scheduler/
+	kubectl apply -f k8s/sender/
+
+k8s-apply-config:
+	kubectl apply -f k8s/configmap.yaml
+	kubectl apply -f k8s/secret.yaml
+
+k8s-install-postgres:
+	helm install postgres oci://registry-1.docker.io/bitnamicharts/postgresql \
+          --namespace calendar \
+          --values k8s/postgres/values.yaml
+
+k8s-pg-connect:
+	$(eval PGPASSWORD := $(shell kubectl get secret -n calendar calendar-secrets -o jsonpath='{.data.DB_PASSWORD}' | base64 --decode))
+	kubectl run pg-client --rm -i --tty --image=postgres \
+        --namespace calendar --restart=Never \
+        --env="PGPASSWORD=$(PGPASSWORD)" \
+        --command -- psql -h postgres-postgresql -U user -d calendar
+
+k8s-restart:
+	kubectl rollout restart deployment/calendar-api -n calendar
+
+.PHONY: check-docker k8s-start k8s-stop k8s-delete k8s-status k8s-build-and-load k8s-check-images k8s-describe-nodes k8s-get-all k8s-pods k8s-apply-deployments k8s-apply-config k8s-instal k8s-pg-connect k8s-restart
