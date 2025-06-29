@@ -94,3 +94,41 @@ rabbit:
 	docker run -d --name rabbitmq -p 15672:15672 -p 5672:5672 rabbitmq:3-management
 
 .PHONY: build run build-img build-calendar-img build-scheduler-img build-sender-img build-testrunner-img run-img version test lint generate generate-mocks swagger rabbit up down logs rebuild restart integration-tests
+
+# === Настройки Kubernetes ===
+MINIKUBE_PROFILE := calendar-cluster
+
+check-docker:
+	@command -v docker >/dev/null 2>&1 || { echo >&2 "Docker не установлен"; exit 1; }
+
+k8s-start: check-docker
+	minikube start --profile $(MINIKUBE_PROFILE) --driver=docker
+	minikube addons enable ingress --profile $(MINIKUBE_PROFILE)
+
+k8s-stop:
+	minikube stop --profile $(MINIKUBE_PROFILE)
+
+k8s-delete:
+	minikube delete --profile $(MINIKUBE_PROFILE)
+
+k8s-status:
+	minikube status --profile $(MINIKUBE_PROFILE)
+
+k8s-build-and-load: build-calendar-img build-scheduler-img build-sender-img
+	minikube image load calendar:develop --profile $(MINIKUBE_PROFILE)
+	minikube image load scheduler:develop --profile $(MINIKUBE_PROFILE)
+	minikube image load sender:develop --profile $(MINIKUBE_PROFILE)
+
+k8s-check-images:
+	minikube ssh --profile $(MINIKUBE_PROFILE) "docker images"
+
+k8s-describe-nodes:
+	kubectl describe nodes
+
+k8s-get-all:
+	kubectl get all -A
+
+k8s-pods:
+	kubectl get pods -A
+
+.PHONY: check-docker k8s-start k8s-stop k8s-delete k8s-status k8s-build-and-load k8s-check-images k8s-describe-nodes k8s-get-all k8s-pods
