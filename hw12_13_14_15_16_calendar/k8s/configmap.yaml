@@ -8,5 +8,7 @@ data:
   DB_PORT: "5432"
   DB_USER: "user"
   DB_NAME: "calendar"
+  DATABASE_DSN: "postgresql://user:pass@postgres-postgresql:5432/calendar?sslmode=disable"
+  MIGRATIONS_PATH: "/app/migrations"
   LOG_LEVEL: "debug"
   TZ: "UTC"

@@ -114,10 +114,13 @@ k8s-delete:
 k8s-status:
 	minikube status --profile $(MINIKUBE_PROFILE)
 
-k8s-build-and-load: build-calendar-img build-scheduler-img build-sender-img
+k8s-load:
 	minikube image load calendar:develop --profile $(MINIKUBE_PROFILE)
 	minikube image load scheduler:develop --profile $(MINIKUBE_PROFILE)
 	minikube image load sender:develop --profile $(MINIKUBE_PROFILE)
+
+k8s-build-and-load: build-calendar-img build-scheduler-img build-sender-img
+	make k8s-load
 
 k8s-check-images:
 	minikube ssh --profile $(MINIKUBE_PROFILE) "docker images"
@@ -137,13 +140,17 @@ k8s-apply-deployments:
 	kubectl apply -f k8s/sender/
 
 k8s-apply-config:
+	kubectl apply -f k8s/namespace.yaml
 	kubectl apply -f k8s/configmap.yaml
 	kubectl apply -f k8s/secret.yaml
 
-k8s-install-postgres:
+helm-install-postgres:
 	helm install postgres oci://registry-1.docker.io/bitnamicharts/postgresql \
           --namespace calendar \
           --values k8s/postgres/values.yaml
+
+helm-delete-postgres:
+	helm delete postgres -n calendar
 
 k8s-pg-connect:
 	$(eval PGPASSWORD := $(shell kubectl get secret -n calendar calendar-secrets -o jsonpath='{.data.DB_PASSWORD}' | base64 --decode))
@@ -155,4 +162,9 @@ k8s-pg-connect:
 k8s-restart:
 	kubectl rollout restart deployment/calendar-api -n calendar
 
-.PHONY: check-docker k8s-start k8s-stop k8s-delete k8s-status k8s-build-and-load k8s-check-images k8s-describe-nodes k8s-get-all k8s-pods k8s-apply-deployments k8s-apply-config k8s-instal k8s-pg-connect k8s-restart
+deploy: k8s-load k8s-apply-config helm-install-postgres
+	make k8s-apply-deployments
+
+.PHONY: check-docker k8s-start k8s-stop k8s-delete k8s-status k8s-load k8s-build-and-load k8s-check-images \
+k8s-describe-nodes k8s-get-all k8s-pods k8s-apply-deployments k8s-apply-config k8s-instal k8s-pg-connect k8s-restart \
+helm-install-postgres helm-delete-postgres deploy

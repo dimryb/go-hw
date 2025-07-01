@@ -26,4 +26,7 @@ spec:
                 name: calendar-config
             - secretRef:
                 name: calendar-secrets
+          env:
+            - name: MIGRATE
+              value: "true"
       restartPolicy: Always
