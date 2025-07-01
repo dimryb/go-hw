@@ -144,6 +144,9 @@ k8s-apply-config:
 	kubectl apply -f k8s/configmap.yaml
 	kubectl apply -f k8s/secret.yaml
 
+k8s-check-services:
+	kubectl get services -n calendar
+
 helm-install-postgres:
 	helm install postgres oci://registry-1.docker.io/bitnamicharts/postgresql \
           --namespace calendar \
@@ -164,6 +167,9 @@ k8s-restart:
 
 deploy: k8s-load k8s-apply-config helm-install-postgres
 	make k8s-apply-deployments
+
+k8s-port-forward:
+	minikube service calendar-api -n calendar --url --profile calendar-cluster
 
 .PHONY: check-docker k8s-start k8s-stop k8s-delete k8s-status k8s-load k8s-build-and-load k8s-check-images \
 k8s-describe-nodes k8s-get-all k8s-pods k8s-apply-deployments k8s-apply-config k8s-instal k8s-pg-connect k8s-restart \
