@@ -26,3 +26,7 @@ ehthumbs.db
 Thumbs.db
 .vscode/
 *.bak
+
+#helm
+Chart.lock
+charts/

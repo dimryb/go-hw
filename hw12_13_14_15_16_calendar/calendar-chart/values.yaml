@@ -1,0 +1,41 @@
+namespace: calendar
+
+api:
+  image:
+    repository: calendar
+    tag: develop
+    pullPolicy: IfNotPresent
+
+scheduler:
+  image:
+    repository: scheduler
+    tag: develop
+    pullPolicy: IfNotPresent
+
+postgres:
+  enabled: true
+  host: calendar-postgresql
+  port: 5432
+  user: user
+  password: pass
+  database: calendar
+  migrationPath: /app/migrations
+  migrate: true
+
+postgresql:
+  auth:
+    username: user
+    password: pass
+    database: calendar
+  primary:
+    persistence:
+      enabled: false
+
+ingress:
+  enabled: true
+  host: calendar.local
+  path: /
+  tls: false
+
+logLevel: true
+

@@ -96,53 +96,46 @@ rabbit:
 .PHONY: build run build-img build-calendar-img build-scheduler-img build-sender-img build-testrunner-img run-img version test lint generate generate-mocks swagger rabbit up down logs rebuild restart integration-tests
 
 # === Настройки Kubernetes ===
-MINIKUBE_PROFILE := calendar-cluster
+CHART_DIR = calendar-chart
+RELEASE_NAME = calendar
+NAMESPACE = calendar
+APP_PORT = 8080
+INGRESS_PORT = 80
 
-check-docker:
-	@command -v docker >/dev/null 2>&1 || { echo >&2 "Docker не установлен"; exit 1; }
+# === Helm ===
 
-k8s-start: check-docker
-	minikube start --profile $(MINIKUBE_PROFILE) --driver=docker
-	minikube addons enable ingress --profile $(MINIKUBE_PROFILE)
+helm-upgrade:
+	helm dependency build $(CHART_DIR)
+	helm upgrade --install $(RELEASE_NAME) $(CHART_DIR) --namespace $(NAMESPACE) --create-namespace
 
-k8s-stop:
-	minikube stop --profile $(MINIKUBE_PROFILE)
+helm-install:
+	helm install calendar ./calendar-chart --namespace calendar --create-namespace
 
-k8s-delete:
-	minikube delete --profile $(MINIKUBE_PROFILE)
+helm-dependency:
+	helm dependency build ./calendar-chart
 
-k8s-status:
-	minikube status --profile $(MINIKUBE_PROFILE)
-
-k8s-load:
-	minikube image load calendar:develop --profile $(MINIKUBE_PROFILE)
-	minikube image load scheduler:develop --profile $(MINIKUBE_PROFILE)
-	minikube image load sender:develop --profile $(MINIKUBE_PROFILE)
-
-k8s-build-and-load: build-calendar-img build-scheduler-img build-sender-img
-	make k8s-load
-
-k8s-check-images:
-	minikube ssh --profile $(MINIKUBE_PROFILE) "docker images"
-
-k8s-describe-nodes:
-	kubectl describe nodes
-
-k8s-get-all:
-	kubectl get all -A
+# === Kubernetes ===
 
 k8s-pods:
 	kubectl get pods -A
 
-k8s-apply-deployments:
-	kubectl apply -f k8s/calendar/
-	kubectl apply -f k8s/scheduler/
-	kubectl apply -f k8s/sender/
+k8s-services:
+	kubectl get svc -A
 
-k8s-apply-config:
-	kubectl apply -f k8s/namespace.yaml
-	kubectl apply -f k8s/configmap.yaml
-	kubectl apply -f k8s/secret.yaml
+k8s-get-all:
+	kubectl get all -A
+
+k8s-logs:
+	kubectl logs -f deployment/$(RELEASE_NAME)-api -n $(NAMESPACE)
+
+k8s-logs-scheduler:
+	kubectl logs -f deployment/$(RELEASE_NAME)-scheduler -n $(NAMESPACE)
+
+port-forward:
+	kubectl port-forward deployment/calendar-api 8080 -n calendar
+
+k8s-describe-nodes:
+	kubectl describe nodes
 
 k8s-check-services:
 	kubectl get services -n calendar
@@ -155,22 +148,4 @@ helm-install-postgres:
 helm-delete-postgres:
 	helm delete postgres -n calendar
 
-k8s-pg-connect:
-	$(eval PGPASSWORD := $(shell kubectl get secret -n calendar calendar-secrets -o jsonpath='{.data.DB_PASSWORD}' | base64 --decode))
-	kubectl run pg-client --rm -i --tty --image=postgres \
-        --namespace calendar --restart=Never \
-        --env="PGPASSWORD=$(PGPASSWORD)" \
-        --command -- psql -h postgres-postgresql -U user -d calendar
-
-k8s-restart:
-	kubectl rollout restart deployment/calendar-api -n calendar
-
-deploy: k8s-load k8s-apply-config helm-install-postgres
-	make k8s-apply-deployments
-
-k8s-port-forward:
-	minikube service calendar-api -n calendar --url --profile calendar-cluster
-
-.PHONY: check-docker k8s-start k8s-stop k8s-delete k8s-status k8s-load k8s-build-and-load k8s-check-images \
-k8s-describe-nodes k8s-get-all k8s-pods k8s-apply-deployments k8s-apply-config k8s-instal k8s-pg-connect k8s-restart \
-helm-install-postgres helm-delete-postgres deploy
+.PHONY:
