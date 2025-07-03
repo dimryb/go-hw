@@ -147,12 +147,5 @@ k8s-describe-nodes:
 k8s-check-services:
 	kubectl get services -n calendar
 
-helm-install-postgres:
-	helm install postgres oci://registry-1.docker.io/bitnamicharts/postgresql \
-          --namespace calendar \
-          --values k8s/postgres/values.yaml
-
-helm-delete-postgres:
-	helm delete postgres -n calendar
-
-.PHONY:
+.PHONY: helm-upgrade helm-install helm-dependency helm-dependency-update k8s-pods k8s-services k8s-get-all k8s-logs \
+k8s-logs-scheduler k8s-logs-sender port-forward k8s-describe-nodes k8s-check-services
