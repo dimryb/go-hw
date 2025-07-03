@@ -22,6 +22,14 @@ postgres:
   migrationPath: /app/migrations
   migrate: true
 
+rabbit:
+  enabled: true
+  host: calendar-rabbitmq
+  port: 5672
+  user: guest
+  password: guest
+  vhost: /
+
 postgresql:
   auth:
     username: user
@@ -30,6 +38,12 @@ postgresql:
   primary:
     persistence:
       enabled: false
+
+rabbitmq:
+  auth:
+    username: guest
+    password: guest
+    erlangCookie: secretcookie
 
 ingress:
   enabled: true

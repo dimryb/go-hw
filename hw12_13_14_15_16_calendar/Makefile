@@ -4,8 +4,8 @@ SENDER_BIN := "./bin/calendar_sender"
 COMPOSE_FILE := "deployments/docker-compose.yml"
 INTEGRATION_COMPOSE_FILE := "deployments/docker-compose.integration.yml"
 
-GIT_HASH := $(shell git log --format="%h" -n 1)
-LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
+#GIT_HASH := $(shell git log --format="%h" -n 1)
+#LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
 
 DOCKER_COMPOSE_TEST := docker compose -f ${INTEGRATION_COMPOSE_FILE}
 
@@ -113,6 +113,9 @@ helm-install:
 
 helm-dependency:
 	helm dependency build ./calendar-chart
+
+helm-dependency-update:
+	helm dependency update ./calendar-chart
 
 # === Kubernetes ===
 

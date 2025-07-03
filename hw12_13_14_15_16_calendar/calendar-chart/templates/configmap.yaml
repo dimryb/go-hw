@@ -12,3 +12,9 @@ data:
   MIGRATIONS_PATH: "{{ .Values.postgres.migrationPath }}"
   MIGRATE: "{{ .Values.postgres.migrate }}"
   LOG_LEVEL: "{{ .Values.logLevel }}"
+
+  RABBIT_HOST: "{{ .Values.rabbit.host }}"
+  RABBIT_PORT: "{{ .Values.rabbit.port }}"
+  RABBIT_USER: "{{ .Values.rabbit.user }}"
+  RABBIT_PASSWORD: "{{ .Values.rabbit.password }}"
+  RABBIT_VHOST: "{{ .Values.rabbit.vhost }}"
