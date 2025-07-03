@@ -12,6 +12,12 @@ scheduler:
     tag: develop
     pullPolicy: IfNotPresent
 
+sender:
+  image:
+    repository: sender
+    tag: develop
+    pullPolicy: IfNotPresent
+
 postgres:
   enabled: true
   host: calendar-postgresql

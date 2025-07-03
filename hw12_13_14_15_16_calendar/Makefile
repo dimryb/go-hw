@@ -107,6 +107,7 @@ INGRESS_PORT = 80
 helm-upgrade:
 	helm dependency build $(CHART_DIR)
 	helm upgrade --install $(RELEASE_NAME) $(CHART_DIR) --namespace $(NAMESPACE) --create-namespace
+	kubectl rollout restart deployment -n calendar
 
 helm-install:
 	helm install calendar ./calendar-chart --namespace calendar --create-namespace
@@ -133,6 +134,9 @@ k8s-logs:
 
 k8s-logs-scheduler:
 	kubectl logs -f deployment/$(RELEASE_NAME)-scheduler -n $(NAMESPACE)
+
+k8s-logs-sender:
+	kubectl logs -f deployment/$(RELEASE_NAME)-sender -n $(NAMESPACE)
 
 port-forward:
 	kubectl port-forward deployment/calendar-api 8080 -n calendar
