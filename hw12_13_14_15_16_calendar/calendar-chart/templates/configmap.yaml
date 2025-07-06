@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: calendar-config
+  namespace: "{{ .Values.namespace }}"
+data:
+  DB_HOST: "{{ .Values.postgres.host }}"
+  DB_PORT: "{{ .Values.postgres.port }}"
+  DB_USER: "{{ .Values.postgres.user }}"
+  DB_NAME: "{{ .Values.postgres.database }}"
+  DATABASE_DSN: "postgresql://{{ .Values.postgres.user }}:{{ .Values.postgres.password }}@{{ .Values.postgres.host }}:{{ .Values.postgres.port }}/{{ .Values.postgres.database }}?sslmode=disable"
+  MIGRATIONS_PATH: "{{ .Values.postgres.migrationPath }}"
+  MIGRATE: "{{ .Values.postgres.migrate }}"
+  LOG_LEVEL: "{{ .Values.logLevel }}"
+
+  RABBIT_HOST: "{{ .Values.rabbit.host }}"
+  RABBIT_PORT: "{{ .Values.rabbit.port }}"
+  RABBIT_USER: "{{ .Values.rabbit.user }}"
+  RABBIT_PASSWORD: "{{ .Values.rabbit.password }}"
+  RABBIT_VHOST: "{{ .Values.rabbit.vhost }}"

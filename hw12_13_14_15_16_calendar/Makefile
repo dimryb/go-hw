@@ -4,8 +4,8 @@ SENDER_BIN := "./bin/calendar_sender"
 COMPOSE_FILE := "deployments/docker-compose.yml"
 INTEGRATION_COMPOSE_FILE := "deployments/docker-compose.integration.yml"
 
-GIT_HASH := $(shell git log --format="%h" -n 1)
-LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
+#GIT_HASH := $(shell git log --format="%h" -n 1)
+#LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
 
 DOCKER_COMPOSE_TEST := docker compose -f ${INTEGRATION_COMPOSE_FILE}
 
@@ -94,3 +94,58 @@ rabbit:
 	docker run -d --name rabbitmq -p 15672:15672 -p 5672:5672 rabbitmq:3-management
 
 .PHONY: build run build-img build-calendar-img build-scheduler-img build-sender-img build-testrunner-img run-img version test lint generate generate-mocks swagger rabbit up down logs rebuild restart integration-tests
+
+# === Настройки Kubernetes ===
+CHART_DIR = calendar-chart
+RELEASE_NAME = calendar
+NAMESPACE = calendar
+APP_PORT = 8080
+INGRESS_PORT = 80
+
+# === Helm ===
+
+helm-upgrade:
+	helm dependency build $(CHART_DIR)
+	helm upgrade --install $(RELEASE_NAME) $(CHART_DIR) --namespace $(NAMESPACE) --create-namespace
+	kubectl rollout restart deployment -n calendar
+
+helm-install:
+	helm install calendar ./calendar-chart --namespace calendar --create-namespace
+
+helm-dependency:
+	helm dependency build ./calendar-chart
+
+helm-dependency-update:
+	helm dependency update ./calendar-chart
+
+# === Kubernetes ===
+
+k8s-pods:
+	kubectl get pods -A
+
+k8s-services:
+	kubectl get svc -A
+
+k8s-get-all:
+	kubectl get all -A
+
+k8s-logs:
+	kubectl logs -f deployment/$(RELEASE_NAME)-api -n $(NAMESPACE)
+
+k8s-logs-scheduler:
+	kubectl logs -f deployment/$(RELEASE_NAME)-scheduler -n $(NAMESPACE)
+
+k8s-logs-sender:
+	kubectl logs -f deployment/$(RELEASE_NAME)-sender -n $(NAMESPACE)
+
+port-forward:
+	kubectl port-forward deployment/calendar-api 8080 -n calendar
+
+k8s-describe-nodes:
+	kubectl describe nodes
+
+k8s-check-services:
+	kubectl get services -n calendar
+
+.PHONY: helm-upgrade helm-install helm-dependency helm-dependency-update k8s-pods k8s-services k8s-get-all k8s-logs \
+k8s-logs-scheduler k8s-logs-sender port-forward k8s-describe-nodes k8s-check-services
